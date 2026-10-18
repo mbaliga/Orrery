@@ -1,0 +1,455 @@
+<div id="app" data-mode="pano" data-view="canopy">
+  <canvas id="cvBeam" aria-hidden="true" hidden></canvas>
+
+  <!-- the space behind the glass -->
+  <div class="canopy v-canopy" id="canopy" data-focus="far">
+    <canvas id="cvStars" aria-hidden="true"></canvas>
+    <canvas id="cvFar" role="img" aria-label="The chord: every project on the left of a circle, linked by ribbons to what it is made of and who made it."></canvas>
+    <canvas id="cvNear" aria-label="Notes. Drag to move, scroll on a note to change its shelf, drop it on a project to tie it there, double-click empty space for a new note."></canvas>
+  </div>
+
+  <!-- on the glass: the strip along the top of the canopy -->
+  <header class="hud-top" id="top">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="13" rx="10" ry="3.6" fill="none" stroke="currentColor" stroke-opacity=".6" stroke-width="1.1"/><circle cx="12" cy="10.4" r="3.4" fill="currentColor"/><circle cx="20.2" cy="13.9" r="1.3" fill="#8e7bff"/></svg>
+      <span class="wm">Orrery</span>
+    </div>
+    <div class="hud-c">
+      <button class="lens" id="lensBtn" data-on="0" aria-haspopup="dialog"><span class="lens-k">Lens</span><span class="lens-v" id="lensV">All work</span></button>
+      <button class="lens-x" id="lensX" hidden aria-label="Clear the lens">clear</button>
+      <nav class="layers" id="layers" aria-label="Show on the chord"></nav>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Views"></nav>
+    <div class="top-r">
+      <button class="hud-l ask-b" id="askBtn" aria-keyshortcuts="Meta+K Control+K /" title="Ask, find or note anything">Ask<kbd>⌘K</kbd></button>
+      <button class="hud-l lean-b" id="leanBtn" aria-keyshortcuts="L" title="Lean back: your work as a calm sky"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16.5L11 8l7.5 4.5" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/><circle cx="5" cy="16.5" r="1.7" fill="currentColor"/><circle cx="11" cy="8" r="2.1" fill="currentColor"/><circle cx="18.5" cy="12.5" r="1.4" fill="currentColor"/></svg><span>Lean back</span></button>
+      <button class="hud-l" id="depthBtn" aria-pressed="false" aria-keyshortcuts="D" title="Show the canopy in depth: the orrery and the flight path">Depth</button>
+      <button class="hud-l" id="chainsBtn" aria-keyshortcuts="C">Chains</button>
+      <button class="hud-l" id="relBtn" aria-keyshortcuts="P" title="How finished each thing is, against what it ships to">Releases</button>
+      <button class="hud-l" id="resumeBtn" aria-keyshortcuts="R" title="Where you were: what was in flight, what was dropped, what to pick up">Resume</button>
+      <button class="hud-l year-b" id="yearBtn" aria-keyshortcuts="Y" title="The year: every day of it around a circle, with your work in the middle"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2.2 1.4"/><circle cx="12" cy="12" r="2.3" fill="currentColor"/><path d="M12 2.2v3.3" stroke="currentColor" stroke-width="1.4"/></svg><span>Year</span></button>
+      <button class="icon" id="setBtn" aria-label="Settings" aria-keyshortcuts="," title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3L5.5 5.5"/></svg></button>
+      <button class="icon" id="fsBtn" aria-label="Full screen" title="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <span class="wx" id="wx" hidden aria-live="off"></span>
+      <time class="clock" id="clock"></time>
+    </div>
+  </header>
+
+  <!-- the dial: the phone's and tablet's camera — two rings round one centre -->
+  <section class="mod dial v-dial only-small" id="m-dial" aria-label="Dial">
+    <canvas id="cvDial" aria-label="Two rings: the lens, and how close"></canvas>
+    <div id="dialBody" class="dl-body"></div>
+  </section>
+  <!-- left wing: the day, and the board -->
+  <aside class="wing wing-l" id="wingL" aria-label="Today and the board">
+    <section class="mod today v-today" id="m-today" aria-label="Today">
+      <div class="day"><h1 class="day-d" id="dayD"></h1><div class="day-t" id="dayT"></div></div>
+      <p class="sum" id="sinceSum"></p>
+      <div class="sec sec-moved">
+        <h2 class="mod-t">Moved this week</h2>
+        <ul class="rows moved" id="digest"></ul>
+      </div>
+      <div class="sec sec-needs">
+        <h2 class="mod-t">Needs you <span class="n" id="needsN"></span></h2>
+        <ul class="rows needs" id="needs"></ul>
+      </div>
+      <div class="sec sec-due only-tabs">
+        <h2 class="mod-t">Goes out this week</h2>
+        <ul class="rows" id="due"></ul>
+        <div class="nudge" id="nudge"></div>
+      </div>
+    </section>
+    <section class="mod board v-board" id="m-board" aria-label="Board">
+      <h2 class="mod-t">Board <span class="n" id="boardN"></span></h2>
+      <div class="cols" id="cols"></div>
+    </section>
+  </aside>
+
+  <!-- right wing: who is working, the numbers, the signal, focus -->
+  <aside class="wing wing-r" id="wingR" aria-label="Crew, vitals, signal and focus">
+    <div class="col col-a">
+      <section class="mod agents v-crew" id="m-agents" aria-label="Crew">
+        <h2 class="mod-t">Crew <span class="n" id="agentsN"></span></h2>
+        <div id="agentRows"></div>
+        <div id="agentWeeks" class="weeks"></div>
+        <div class="loop" id="loop"></div>
+        <h3 class="mod-t sub-t">Waiting for review <span class="n" id="openN"></span></h3>
+        <ul class="rows" id="openWork"></ul>
+      </section>
+      <section class="mod vitals v-crew" id="m-vitals" aria-label="Vitals">
+        <h2 class="mod-t">Vitals</h2>
+        <div class="stats" id="stats"></div>
+        <div class="vit-row">
+          <div><div class="heat" id="heat"></div><p class="cap">Your commits, 16 weeks</p></div>
+          <div><div id="hours"></div><p class="cap">When you commit, India time</p></div>
+        </div>
+        <div id="progress"></div>
+        <p class="cap" id="through"></p>
+      </section>
+    </div>
+    <div class="col col-b">
+      <section class="mod signal v-crew" id="m-signal" aria-label="Signal">
+        <h2 class="mod-t">Signal <span class="tag-s">simulated</span><span class="mod-s">MW75 Neuro, 12 channels, 500 Hz</span></h2>
+        <canvas class="sig-c" id="sigCanvas" aria-label="EEG trace, three channels"></canvas>
+        <div class="sig-row">
+          <div class="bands" id="bands" aria-label="Band power"></div>
+          <div class="cups" id="cups" aria-label="Contact quality"></div>
+        </div>
+        <button class="sw" id="liveSw" aria-pressed="false"><span class="sw-t"></span><span id="sigLive"></span></button>
+        <h3 class="mod-t sub-t">After each block <span class="tag-s">simulated</span></h3>
+        <ul class="rows" id="afterBlocks"></ul>
+      </section>
+      <section class="mod focus v-crew v-today" id="m-focus" aria-label="Focus">
+        <h2 class="mod-t">Focus <span class="mod-s">sound made on this device</span><span class="info-at" data-info="Bars are your median focus block with each sound. Sample until the headset is connected. Noise helps some people and slows others, so the record that counts is yours." data-label="About the sounds"></span></h2>
+        <div class="fo-grid">
+          <figure class="dial-f">
+            <div class="dial" id="dial"></div>
+            <figcaption class="cap" id="dialCap"></figcaption>
+          </figure>
+          <div class="fo-r">
+            <div class="fo">
+              <button class="play" id="foPlay" aria-pressed="false" aria-keyshortcuts="F"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="foIcon" d="M8 5l11 7-11 7z" fill="currentColor"/></svg></button>
+              <div><div class="fo-t" id="foT">00:00</div><div class="fo-s" id="foS"></div></div>
+            </div>
+            <div id="sounds"></div>
+            <div class="vol"><label for="vol">Volume</label><input id="vol" type="range" min="0" max="100" value="50"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <!-- on the glass, over the floor: what is counting down -->
+  <div class="hud-bottom" id="hudB" aria-label="Counting down">
+    <div class="readouts" id="hudL"></div>
+    <div class="hud-n" id="hudN"></div>
+    <div class="readouts r" id="hudR"></div>
+  </div>
+
+  <!-- time, as lists (tablet and phone) -->
+  <section class="mod time v-time" id="m-time" aria-label="Time">
+    <div class="time-g">
+      <div><h2 class="mod-t">Counting down</h2><div class="clocks" id="clocks"></div></div>
+      <div><h2 class="mod-t">Next nudges</h2><ul class="rows" id="nudges"></ul></div>
+    </div>
+    <h2 class="mod-t" style="margin-top:2.4rem">Ahead</h2>
+    <div class="agenda" id="agenda"></div>
+  </section>
+
+  <!-- dependencies: a sheet over the canopy on the ultrawide, a view on tablet and phone -->
+  <section class="mod deps v-chains sheet-v" id="m-deps" aria-label="Dependencies" data-open="0">
+    <div class="deps-h">
+      <h2 class="mod-t">Chains <span class="n" id="depsN"></span></h2>
+      <button class="hud-l only-pano" id="depsX">close</button>
+    </div>
+    <p class="deps-sum" id="depsSum"></p>
+    <ul class="rows" id="depsTop"></ul>
+    <div class="chains" id="chains"></div>
+    <div class="legend">
+      <span><svg viewBox="0 0 26 8"><path d="M0 4H26" class="edge"/></svg>depends on</span>
+      <span><svg viewBox="0 0 26 8"><path d="M0 4H26" class="edge slip"/></svg>delayed by</span>
+      <span><svg viewBox="0 0 26 8"><path d="M0 4H26" class="edge gate"/></svg>stalled at a gate</span>
+      <span class="more" id="depsMore"></span>
+    </div>
+  </section>
+
+  <!-- releases: how finished each thing is; a sheet over the canopy on the ultrawide, a view elsewhere -->
+  <section class="mod deps rel v-releases sheet-v" id="m-rel" aria-label="Releases" data-open="0">
+    <div class="deps-h">
+      <h2 class="mod-t">Releases <span class="n" id="relN"></span></h2>
+      <button class="hud-l only-pano" id="relX">close</button>
+    </div>
+    <p class="deps-sum" id="relSum"></p>
+    <div class="rel-rows" id="relRows"></div>
+    <p class="rel-legend">A meter is five bands, left to right: account, listing, assets, gates, build. Filled is met; hatched is unknown here. A hollow diamond is a gate only you can clear.</p>
+  </section>
+
+  <!-- resume: where you were -->
+  <section class="mod deps resume v-resume sheet-v" id="m-resume" aria-label="Resume" data-open="0">
+    <div class="deps-h">
+      <h2 class="mod-t">Resume</h2>
+      <button class="hud-l only-pano" id="resumeX">close</button>
+    </div>
+    <div class="rs-body" id="resumeBody"></div>
+  </section>
+
+  <nav class="dock" id="dock" aria-label="Views"></nav>
+
+<!-- body: sessions as their segments, where you are sore, how long you have sat -->
+<div class="bodyx" id="m-body" hidden role="dialog" aria-modal="true" aria-label="Body">
+  <div class="deps-h bx-h">
+    <h2 class="mod-t">Body <span class="mod-s">training as its segments; sore regions; sitting</span><span class="info-at" data-info="A session is its segments: a fencing class is warm-up, footwork, drills and bouts, and only the bouts are fencing. Crocodyl and the watch companion will write these; here you log them by hand. Tap a body region once for mild, twice for sore, three times for sharp. Everything here stays in this browser." data-label="About Body"></span></h2>
+    <button class="hud-l" id="bodyX">close</button>
+  </div>
+  <div class="bx-g">
+    <div class="bx-fig" id="bodyFig"></div>
+    <div class="bx-mid"><div id="bodyList"></div><div id="bodyForm" class="bx-form"></div></div>
+    <div class="bx-side"><canvas id="cvBody" aria-label="Training by hour of the day, lighter for easier segments"></canvas><div id="bodySit"></div></div>
+  </div>
+</div>
+  <button class="fab" id="fab" aria-label="Ask, find or note anything"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.7 4.9 3.1 7.3 8 8-4.9.7-7.3 3.1-8 8-.7-4.9-3.1-7.3-8-8 4.9-.7 7.3-3.1 8-8z" fill="currentColor"/></svg></button>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="note-tools" id="noteTools" hidden role="toolbar" aria-label="Note"></div>
+<form class="note-new" id="noteNew" hidden autocomplete="off">
+  <label class="sr" for="noteIn">New note</label>
+  <input id="noteIn" type="text" placeholder="A thought, #tag it" enterkeyhint="done">
+</form>
+<ul class="sr" id="notesSr" aria-label="Notes"></ul>
+
+<!-- lean back: the sky -->
+<div class="sky" id="sky" hidden role="region" aria-label="Lean back: your work as constellations">
+  <canvas id="cvSky" aria-hidden="true"></canvas>
+  <div class="sky-vis" id="skyVis" hidden>
+    <p class="sky-vis-k" data-brand="{name}">Orrery</p>
+    <p class="sky-vis-t" id="skyVisT"></p>
+  </div>
+  <button class="sky-card" id="skyCard" hidden aria-live="polite"></button>
+  <div class="sky-key" id="skyKeyBox" hidden>
+    <p class="sky-key-h"><span>Reading the sky</span><button class="hud-l" id="skyKeyX">close</button></p>
+    <ul>
+      <li><i class="k-s"><svg viewBox="-10 -10 20 20" aria-hidden="true"><path d="M0-9L2.3-2.3 9 0 2.3 2.3 0 9-2.3 2.3-9 0-2.3-2.3z" fill="currentColor"/><circle r="2.6" fill="currentColor"/></svg></i><span>One of your shared modules. Larger when more projects use it; every project that uses it runs through this one star.</span></li>
+      <li><i class="k-t"></i><span>A library or tool, the same way.</span></li>
+      <li><i class="k-p"></i><span>A project. Its glow is its commits in the last four weeks, radium where you made them, cyan where agents did.</span></li>
+      <li><i class="k-n"></i><span>A project that lives in notes and has not been scanned yet.</span></li>
+      <li><i class="k-l"></i><span>A constellation: the shortest lines from a project through every module it uses or provides. Brighter is busier; dashed is notes.</span></li>
+      <li><i class="k-d"></i><span>Modules used together sit together, and so do projects in one group. Each grain of dust is a commit from the last sixteen weeks.</span></li>
+    </ul>
+    <p class="sky-key-f">Tap a star to light what it touches, tap it again to lean in on it. Start typing to ask.</p>
+  </div>
+  <div class="sky-bar" id="skyBar">
+    <div class="sky-time"><span class="sky-clock" id="skyT"></span><span class="sky-date" id="skyD"></span></div>
+    <div class="sky-r">
+      <button class="hud-l sky-ask" id="skyAsk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.7 4.9 3.1 7.3 8 8-4.9.7-7.3 3.1-8 8-.7-4.9-3.1-7.3-8-8 4.9-.7 7.3-3.1 8-8z" fill="currentColor"/></svg>Ask<kbd>⌘K</kbd></button>
+      <button class="hud-l" id="skyKey" aria-controls="skyKeyBox">Key</button>
+      <button class="hud-l" id="skyIn">Lean in</button>
+      <button class="hud-l sky-vis-x" id="skyVisX">Close the preview</button>
+    </div>
+  </div>
+</div>
+
+<!-- ask: one input for anything, from anywhere -->
+<div class="ask" id="ask" hidden>
+  <div class="ask-in" role="dialog" aria-label="Ask Orrery" data-brand="Ask {name}" data-brand-attr="aria-label">
+    <div class="ask-bar">
+      <svg class="ask-g" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.7 4.9 3.1 7.3 8 8-4.9.7-7.3 3.1-8 8-.7-4.9-3.1-7.3-8-8 4.9-.7 7.3-3.1 8-8z" fill="currentColor"/></svg>
+      <input id="askIn" type="text" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="go" placeholder="Ask, find, or note anything"
+        role="combobox" aria-expanded="true" aria-controls="askList" aria-autocomplete="list" aria-label="Ask Orrery" data-brand="Ask {name}" data-brand-attr="aria-label">
+      <button class="ask-mic" id="askMic" aria-pressed="false" aria-label="Speak" title="Speak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v3"/></svg></button>
+    </div>
+    <div class="ask-ans" id="askAns" hidden aria-live="polite"></div>
+    <ul class="ask-list" id="askList" role="listbox" aria-label="Results"></ul>
+    <p class="ask-foot" id="askFoot"></p>
+  </div>
+</div>
+
+<div class="sheet" id="blueprint" hidden role="dialog" aria-label="How Orrery is wired" data-brand="How {name} is wired" data-brand-attr="aria-label">
+  <div class="sheet-in">
+    <button class="hud-l sheet-x" id="bpClose">close</button>
+    <h2 data-brand="How {name} is wired">How Orrery is wired</h2>
+    <p>A working design for one view over all your work, and the product it becomes. The structure, the pull requests and who made what are measured from git. The tasks, completion, focus blocks and the EEG trace are examples that show how each part behaves; open any item and it says which it is.</p>
+
+    <h3>The cockpit</h3>
+    <ul class="bul">
+      <li><strong>Flat by default.</strong> The chord is drawn face on, because everything it says lives in its plane: arc length is each thing's share of the work, ribbon width is how strongly two things connect, and place on the circle is the group, written just inside it. Platforms have their own stretch, each with a plain icon for its kind: a phone for Android, a watch for Wear OS and Garmin, a browser window for the web, a store bag for Google Play. A project is linked to a platform from what it is built with, so Play Billing or Jetpack Compose means Android and Connect IQ means Garmin, and in the build a platform's own mark can replace its icon from a file in the repo. Outside each project a bar shows its commits in the last four weeks, so you see what is busy now as well as what is big. On the ultrawide a time strip runs under it: now at the left, four months ahead to the right, fixed deadlines as diamonds and the reminders before them as ticks.</li>
+      <li><strong>Notes on the glass.</strong> Notes line up beside the chord, pinned first, on one of three shelves: near ones are larger and brighter, far ones recede. Scroll on a note, or use Closer and Further, to move it between shelves. Drag one anywhere and it stays there. Drop it on a project to tie it: it hangs beside the chord at that project's height, with a line to its name, and pointing at it lights the project.</li>
+      <li><strong>Depth, if you want it.</strong> Press D, or Depth at the top, for the orrery and the flight path in three dimensions. It is drawn for your curve: the Odyssey OLED G9 (G93SD) is 1800R and about 1.2 m wide, so unless you sit 1.8 m away your eyes are inside the curve, and every ray from your eye is traced to where it meets the panel, 80 cm away by default. Look at a note and the far scene softens. Set your distance in Settings, under Display.</li>
+      <li><strong>The torch.</strong> With a mouse, a soft light follows the pointer. Over the chord it works as a loupe on the ring: the names under it spread apart, so the ones that had no room appear, each with a fine line back to its arc, and what is nearest the light wins the space. Off in Settings, under Display.</li>
+      <li><strong>The OLED panel.</strong> Nothing bright sits still: the chord turns about two degrees over four minutes, the whole view shifts a pixel or two every few minutes, and the instruments dim after five minutes without you. This works alongside the monitor's own OLED Safeguard, which dims static logos and taskbars and starts a screen saver after ten idle minutes. Each star is one commit from the last sixteen weeks: radium for you, cyan for agents, brighter when recent.</li>
+    </ul>
+    <div class="keys">
+      <span><kbd>⌘K</kbd> or <kbd>/</kbd> ask anything</span><span><kbd>L</kbd> lean back</span><span><kbd>click</kbd> lens on anything</span><span><kbd>Esc</kbd> back to everything</span><span><kbd>H</kbd> home</span>
+      <span><kbd>N</kbd> or double-click: a note</span><span><kbd>scroll on a note</kbd> change its shelf</span><span><kbd>drop a note on a project</kbd> tie it there</span>
+      <span><kbd>D</kbd> Depth</span><span><kbd>C</kbd> chains</span><span><kbd>F</kbd> focus block</span><span><kbd>press and hold</kbd> a note, on touch</span>
+      <span><kbd>Y</kbd> the year</span><span><kbd>,</kbd> settings</span><span><kbd>Start</kbd> settings, on a controller</span>
+      <span><kbd>in Depth: drag</kbd> turn and tilt</span><span><kbd>in Depth: scroll or pinch</kbd> fly closer</span>
+    </div>
+
+    <h3>Lean back, lean in, and Ask</h3>
+    <ul class="bul">
+      <li><strong>Lean in</strong> is the cockpit: everything at once on the ultrawide, one view at a time elsewhere, made to be touched.</li>
+      <li><strong>Lean back</strong> is the sky, and every mark in it is data. A star is a module: one of your shared modules (a four-point star) or a library (a dot), sized by how many projects use it, and shared by all of them, so crash-recovery, used by ten projects and kept in Shared Libraries, is one bright star where eleven constellations meet. A project is a glowing star of its own: the glow is its commits in the last four weeks, radium where you made them, cyan where agents did; a hollow ring is a project that lives in notes. A project's constellation is the shortest set of lines from it through every module it uses or provides. Where things sit comes from what is built together: modules used by the same projects drift together, and projects in one group sit near each other, so a far-flung constellation is a project that borrows from all over your work. Each grain of dust is a commit from the last sixteen weeks. Nothing moves for show: a project breathes only if it was worked on in the last three hours, and the whole sky drifts a few pixels over minutes so nothing sits still on the OLED.</li>
+      <li>One thing at a time rises to the surface and lights its constellation: what is due in the next two days, the next reminder, the gates that wait on you, what moved since yesterday, the nearest fixed deadline, the module most projects lean on. What needs you is violet; everything else stays quiet. Point at or tap a star to light what it touches; click it, or tap it again, to lean in with it as the lens. A phone opens on the sky, and the ultrawide leans back after five minutes without you, unless you choose Dim in Settings, under Lean back.</li>
+      <li><strong>Ask Orrery</strong> works from anywhere: <kbd>⌘K</kbd> or <kbd>/</kbd> on a keyboard, the star on a phone, or just start typing on the sky. It finds any project, group, library, agent, task, date or note. It keeps a thought as a note (<em>note: …</em>, or anything it cannot place), adds a task (<em>task: fix the CI cache in Fylz</em>), moves a card (<em>move compaction to done</em>), sets the lens and starts a focus block. It answers from your data: what is next, what needs me, what moved, who is working, when is the OII application. Speak to it where the browser allows a microphone. Nothing leaves the device. In the build, a question it cannot answer goes to your on-device model, ASOM when it is running or the browser's own; where this browser already has one, it is used here too.</li>
+    </ul>
+
+    <h3>The year</h3>
+    <ul class="bul">
+      <li><strong>Twelve months around a circle, today at the top.</strong> Press Y, or Year at the top. The past runs counter-clockwise to the left and what is ahead clockwise to the right, from five months back to six ahead. Each month is a small calendar page: the days of the week run clockwise and its weeks run inward.</li>
+      <li><strong>Every mark is a day.</strong> A day's mark is its commits, by area: the radium core is yours and the cyan around it the agents'. A hollow mark is a day before the daily record began on 17 June. What is dated sits on its day as on the time strip: a diamond for a fixed deadline, a ring for a planned date, a square for something to send, violet when gates wait on you. Inside the ring are the publishing sprint, with a dot for each post, and each month's total.</li>
+      <li><strong>Your work in the middle.</strong> Every project with what it is made of, who made it and where it runs, as a graph in three dimensions, pulled together by what is built with what. Drag it to turn it; it turns slowly by itself unless Motion is set to Still. Point at a project and the weeks it moved stay lit around the year; point at a day and that week's projects light up. On the ultrawide, what you point at is written on the past side and what is ahead on the future side.</li>
+    </ul>
+
+    <h3>Releases and Resume</h3>
+    <ul class="bul">
+      <li><strong>Releases</strong> is how finished each thing is against what it ships to. A target is a store, a font library, a venue or a publication, and each one's requirements are data with a research date and sources, never code: Google Play's listing limits, assets and the closed test; F-Droid's inclusion policy; Google Fonts' onboarding; a venue's call for papers. A meter has five bands, account, listing, assets, gates and build, and every tick names its source: a task or date on the board, a fact read from a repo, a store's API once its connector is on, or your own mark. What nothing here can know is hatched as unknown, not guessed. Each open step carries a prompt that hands the work to Ask. In the build the per-step state lives in the workspace repo as <code>releases/&lt;project&gt;/&lt;target&gt;.md</code>, the requirements dataset lives in the Studio repo and is read from there, and the Play Console, App Store Connect, GitLab and GitHub connectors fill the API steps with the user's own credentials.</li>
+      <li><strong>Resume</strong> is for coming back after time away: how long since your last commit and what agents did meanwhile, what was in flight, what was dropped (stalled gates, slipped tasks, dates that passed with sends open, notes you pinned), what each thing is for in the registry's own words, and the three smallest moves that pick the work back up. Ask “where was I” or “catch me up on Fylz” for the same from anywhere.</li>
+    </ul>
+
+    <h3>Rhythm: the three days, the runways, the clock</h3>
+    <ul class="bul">
+      <li><strong>The plan</strong> runs as a rolling sprint of three days, counted in slots of attention rather than hours. A weekday's slots are read from your own commits by weekday since May and can be overruled in Settings; the day starts after your quietest hours, not at midnight; today's slots bend with your latest check-in; a hard training session takes a recovery slot off its day; after three planned days the plan scales itself to what you finished against what was planned. Items are placed earliest deadline first, after whatever blocks them, and never past a day's slots, so every dated thing gets a <strong>runway</strong>: the bars of work that lead to it, hatched where they run past the date. Every adjustment is written beside the day. A task moved, a check-in, a session logged: each replans from scratch; nothing is remembered but the planned-against-done log and your routine.</li>
+      <li><strong>When</strong> is a band on the chord: eight three-hour stretches, linked from each project by your own commits in that stretch. The clock at the strip's left end is the same record as a rose of twenty-four hours, yours inside and the agents' outside, broken out for whatever the lens or the pointer is on. Notes and check-ins sit on its hub at the hour they were made. Ask “when am I most productive” for the words.</li>
+      <li><strong>Body</strong> (B) keeps training as its segments, because only the bouts in a fencing class are fencing; a body map of where you are sore; and how long you have sat. Sore regions put short breaks into today. Crocodyl and the watch companion will write the sessions; here you log them by hand. Mobility ideas are general, not medical advice.</li>
+      <li><strong>Notes compile themselves</strong>: a new note is read against everything the page knows by name and linked to it, and keeps the hour, the view, the lens and your last check-in, so the record can later say when ideas come. Linked notes sit in the Year's graph beside what they are about. The matching is by words; the build adds the on-device embedder for meaning.</li>
+      <li><strong>Where it is kept</strong>: check-ins, sessions, the body map and phases never leave this browser. In the build they live in the workspace's <code>local/</code> folder, ignored by git, and sync only if you turn that on, encrypted to your own key.</li>
+    </ul>
+
+    <h3>The graph, the kit, the colours</h3>
+    <ul class="bul">
+      <li><strong>The graph</strong> in the Year runs on the shared engine (<code>ASOC.Graph</code>): drag the ground to turn it in depth or pan it flat, wheel to zoom about the pointer, drag a node to move and pin it, shift-drag a note onto a project to tie them, click or shift-click or shift-drag a brush or alt-drag a lasso to select (a hull gathers the selection), double-click to focus, right-click for the lens, pins, folding a group, fit, reset, minimap, fisheye, the edge lens, the grid and undo. <kbd>V</kbd> flattens it to 2D and back; <kbd>M</kbd> shows the minimap; arrows walk the selection. The same set that AntV G6 offers, mapped item by item in the kit’s README.</li>
+      <li><strong>The kit</strong>: cells, tones, the rose, brands, the graph engine and the gantt live in <code>Shared-Libraries-asoc/web/orrery-kit</code>, so no app in the constellation draws them twice. This page builds from that checkout and keeps a vendored copy.</li>
+      <li><strong>Colour</strong>: Brands by default — a language, library or platform wears its own colour and mark (simple-icons, CC0 paths; each mark belongs to its owner, which is why they are a setting and never ornament); By kind gives each band a hue; Ink only is the monochrome field. Projects and agents keep their colours throughout.</li>
+      <li><strong>Scale</strong>: <kbd>+</kbd> and <kbd>−</kbd> scale the whole interface; Settings → Display also sets text size on its own.</li>
+      <li><strong>Where work repeats</strong>, in Resume: the same stack with no shared module, the same task in two projects, overlapping purposes, notes tying projects together, stalled repos — read by words and shared libraries. In the build the on-device or cloud model, with your own key, reads the repos themselves and writes the plan of action from these findings.</li>
+    </ul>
+
+    <h3>The free view</h3>
+    <p>Anyone who opens Orrery without paying sees your apps as one sky: each app a star, joined to the others through the modules it shares, each opening its own page. It is read-only, needs no sign-in and counts nothing, so it shows no commits, tasks, notes or dates. An app appears once its repo is public or it is live; the rest stay out until you announce them. Preview it from Settings, under Data.</p>
+
+    <h3>Settings</h3>
+    <p>Everything you can change lives in Settings: the gear at the top, the comma key, or Start on a controller. It is moved through like a console menu: arrows or the pad move, left and right change a value, Enter or A acts, Escape or B goes back, and Q and E or the bumpers change section. Display holds the view, the background, the sunbeam, the torch, motion and the curve; Lean back holds what happens when you step away; Connectors lists each source and whether it is live; Make it yours holds your own name and logo.</p>
+    <ul class="bul">
+      <li><strong>Backgrounds.</strong> Six dark grounds and one of your own. The writing is light, so any colour you pick is kept dark enough to read on. Black leaves an OLED's pixels off.</li>
+      <li><strong>The sunbeam.</strong> Light through a window that follows the sun across your day, from the left in the morning to the right in the evening, gone at night. Each mote of dust in it is a commit from the last seven days of the scan, and it only shows as it crosses the light. Off by default, faint on the OLED, and it rests when you lean back.</li>
+      <li><strong>Make it yours.</strong> Your name and logo where Orrery's are: the corner, the window title, Ask, the free view and these notes. In the public release it is a thank-you for joining Friends of asoc. The key is checked on the device, and anyone who forks the code can rename it anyway: the membership is support, not a lock.</li>
+    </ul>
+
+    <h3>Huly, and what not to build</h3>
+    <p><strong>Do not build on Huly.</strong> It is good software and free on its cloud plan, but it would be a second copy of your tasks, not the place they live. Its GitHub link syncs issues and comments both ways and pulls requests one way; its docs say nothing of Projects fields or of blocked-by links. Self-hosted it wants 2 CPUs and 8 GB at the minimum, a CockroachDB, Elasticsearch, Redpanda and MinIO stack, and your own GitHub App, and its own README warns the bundled databases may not be production-ready. The cloud plan puts your work on someone else’s server, which your constellation rules out. And it cannot draw the chord, the agents or the headset.</p>
+    <div class="tbl-w"><table class="tbl">
+      <thead><tr><th>Need</th><th>Already exists, free</th><th>What gets built</th></tr></thead>
+      <tbody>
+        <tr><td>Tasks and board</td><td>GitHub Issues and one GitHub Project. It stays usable on its own, from any device, if this page is ever down.</td><td>The view, and one write when a card moves.</td></tr>
+        <tr><td>Dependencies</td><td>GitHub’s blocked-by links, generally available since August 2025, up to 50 a side, with REST, GraphQL and webhooks.</td><td>The tree per goal, and two derived states: delayed and stalled.</td></tr>
+        <tr><td>Pull requests and agents</td><td>Git itself: pull request refs, branch names, co-author trailers. Claude and Codex can be assigned issues on GitHub and open pull requests.</td><td>The indexer that made this page: 246 pull requests and 3,085 commits read with no token.</td></tr>
+        <tr><td>Stats</td><td>The same scan, plus the API for stars, forks and traffic.</td><td>A nightly snapshot, because GitHub keeps traffic for 14 days only.</td></tr>
+        <tr><td>EEG</td><td>Your mw75-streamer fork emits WebSocket JSON; the mw75 Rust crate streams on Linux, macOS and Windows. Neurable itself offers raw data only through its separate Research Kit.</td><td>A thin bridge on the device that wears the headset, and the widgets. Baseline supplies derived state.</td></tr>
+        <tr><td>Notes</td><td>Markdown files in the tracker repo, beside IDEAS.md.</td><td>Capture, pin, and promote to an issue.</td></tr>
+        <tr><td>Reminders</td><td>ntfy for push to phone, iPad and desktop, and a calendar feed any calendar app subscribes to.</td><td>A scheduled Action that walks each date’s ladder and sends what is due.</td></tr>
+        <tr><td>Focus sound</td><td>Web Audio for generated sound, your own files, and the Navidrome library Runout already targets.</td><td>The player, and the record of which sound holds a block longest for you.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>How data moves</h3>
+    <figure class="fig">
+      <svg viewBox="0 0 960 330" role="img" aria-label="GitHub holds tasks and code. A nightly indexer writes files into the tracker repo. The page reads both with your token. A scheduled Action sends nudges. EEG stays on the local device.">
+        <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L8 4L0 8z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-opacity=".45" stroke-width="1.2">
+          <rect x="20" y="30" width="220" height="92" rx="8"/>
+          <rect x="370" y="30" width="220" height="92" rx="8"/>
+          <rect x="720" y="30" width="220" height="92" rx="8" stroke="#8e7bff" stroke-opacity="1"/>
+          <rect x="20" y="210" width="220" height="92" rx="8"/>
+          <rect x="370" y="210" width="220" height="92" rx="8"/>
+          <rect x="720" y="210" width="220" height="92" rx="8"/>
+        </g>
+        <g font-size="14" font-weight="500">
+          <text x="36" y="58">GitHub</text><text x="386" y="58">Tracker repo</text><text x="736" y="58">This page</text>
+          <text x="36" y="238">Agents and you</text><text x="386" y="238">Scheduled Actions</text><text x="736" y="238">MW75 headset</text>
+        </g>
+        <g font-size="12" opacity=".7">
+          <text x="36" y="80">Issues, one Project,</text><text x="36" y="97">blocked-by links, pull requests</text>
+          <text x="386" y="80">constellation.json, schedule,</text><text x="386" y="97">notes, snapshots, ledger</text>
+          <text x="736" y="80">Static files, your token,</text><text x="736" y="97">no server of its own</text>
+          <text x="36" y="260">Claude Code, Codex, you.</text><text x="36" y="277">Trailers say who did what</text>
+          <text x="386" y="260">Nightly scan; nudges every</text><text x="386" y="277">15 minutes to ntfy and a feed</text>
+          <text x="736" y="260">Streamer on the same device.</text><text x="736" y="277">Raw signal never leaves it</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ah)">
+          <path d="M240 60H366" stroke-opacity=".7"/>
+          <path d="M590 76H716" stroke-opacity=".7"/>
+          <path d="M130 210V126" stroke-opacity=".7"/>
+          <path d="M480 210V126" stroke-opacity=".7"/>
+          <path d="M830 210V126" stroke-opacity=".7"/>
+          <path d="M240 232C300 232 310 256 366 256" stroke-opacity=".7"/>
+        </g>
+        <path d="M720 46C660 10 300 10 244 44" stroke="#8e7bff" stroke-width="1.4" fill="none" marker-end="url(#ah)" marker-start="url(#ah)"/>
+        <g font-size="11" opacity=".75">
+          <text x="268" y="52">scanned</text><text x="622" y="68">reads files</text>
+          <text x="420" y="22" fill="#a593ff" opacity="1">reads and writes tasks, both ways</text>
+          <text x="138" y="172">commit</text><text x="488" y="172">writes</text><text x="838" y="172">local socket</text><text x="262" y="226">reads</text>
+        </g>
+      </svg>
+      <figcaption>GitHub is the only store for tasks, so the page and GitHub cannot disagree. A card moved here sets Status there; an issue closed there is done here on the next read. The signal stays on the device that wears the headset.</figcaption>
+    </figure>
+
+    <h3>Time: countdowns, nudges and sends</h3>
+    <ul class="bul">
+      <li><strong>Every date has a ladder.</strong> The OII application nudges at 42, 28, 14, 7, 3, 2 and 1 days, and asks you to send two days early. A Stack Overflow post nudges the day before and on the morning.</li>
+      <li><strong>Every date has a send list.</strong> What has to go out, each item tied to its task, so a countdown also says how much is ready: OII is 0 of 6 today.</li>
+      <li><strong>Delivery.</strong> Push through ntfy to the phone, iPad and the desktop, and a calendar feed for the fixed dates. Both come from the Action, so nothing depends on this page being open.</li>
+      <li><strong>Real dates on this page.</strong> OII closes at 12:00 midday UK time on Thursday 7 January 2027. DIS 2027 wants pictorial abstracts on 11 January and full pictorials on 18 January, anywhere on Earth. CHI 2027 posters close on 21 January, anywhere on Earth. The publishing rhythm is your Tool as Argument calendar, replanned on 6 October. Fonebrew has no date, by its own rule.</li>
+    </ul>
+
+    <h3>Orrery, as a product</h3>
+    <ul class="bul">
+      <li><strong>One product, scoped to whoever opens it.</strong> Each person sees the slice of this view that is theirs: their own repos, tasks, dates and notes. Yours is the full scope on this page.</li>
+      <li><strong>The most basic view is the constellation.</strong> Without paying or signing in, anyone sees your apps as one sky, each linked to its page, as described under The free view.</li>
+      <li><strong>Free is read-only.</strong> Everything here is visible and useful without paying: the chord, the board, the chains, the time strip, the crew.</li>
+      <li><strong>Paid writes.</strong> Moving cards, editing tasks, placing notes and sending nudges are the paid layer.</li>
+      <li><strong>A fork writes too.</strong> Anyone who forks or clones the repo and runs it themselves gets the full read and write build.</li>
+      <li><strong>It holds no data.</strong> Each person points it at their own private repo and gives it a token that stays on their device. No backend and no telemetry.</li>
+      <li><strong>Token.</strong> A Project owned by a personal account still needs a classic token with project and repo scope; fine-grained tokens reach organisation Projects only. Blocked-by links work with a fine-grained token.</li>
+      <li><strong>A widget is one file.</strong> An id, the sizes it supports, the channels it reads such as <code>eeg.bands</code> or <code>schedule.nudges</code>, and a render function. Signal and Focus are written that way.</li>
+      <li><strong>Where it lives.</strong> Personal-Tracker first: <code>app/</code>, <code>index/</code> for the scanner, <code>data/</code> for what it writes, <code>notes/</code> with each note’s place in space in its front matter. Then Shared-Libraries-asoc takes <code>:tracker-schema</code> and the graph and dependency engines once a second app needs them.</li>
+    </ul>
+
+    <h3>Build order</h3>
+    <ol class="steps">
+      <li><b>A board today</b>One GitHub Project with Status, Product, Track, Gate and Due fields. That is a working board before any code.</li>
+      <li><b>The indexer</b>The scanner behind this page as a nightly Action in Personal-Tracker, writing constellation.json and a dated snapshot.</li>
+      <li><b>This page, live</b>Read those files and the Project through the API. Dragging a card writes Status back.</li>
+      <li><b>Time</b>The schedule file, the ladders, the ntfy Action and the calendar feed.</li>
+      <li><b>The ledger</b>A Claude Code hook appends each session; chat and research work is logged by hand.</li>
+      <li><b>The headset</b>The MW75 bridge and Signal, then sound that follows the signal through Baseline.</li>
+    </ol>
+
+    <h3>Decisions that are yours</h3>
+    <ul class="bul">
+      <li><strong>The headset licence.</strong> The mw75 crate is GPL-3.0. Fine to run beside the app; bundling it would put the product under GPL. Your Python fork carries upstream’s licence.</li>
+      <li><strong>Live focus.</strong> Derived EEG metrics appear after each block by default, following Baseline’s rule against a live display. One switch turns live on.</li>
+      <li><strong>Colour.</strong> The repo’s color.json has cold cyan #35E0FF and radium #C7EF9E for provenance and no #08FED5, so this page follows the repo, and the open Palette proposal can replace them later.</li>
+      <li><strong>Hours.</strong> Hours from commit times undercount design, writing and review. The ledger and headset time are what make that number true.</li>
+    </ul>
+
+    <h3>Reading it</h3>
+    <ul class="bul">
+      <li>Lit means inside your lens. Everything else recedes.</li>
+      <li>Violet is spent on what needs you, and on the lens you chose.</li>
+      <li>Radium is you, cyan is a cloud agent. A breathing mark worked in the last three hours.</li>
+      <li>A dotted arc comes from notes and has not been scanned. A bar outside a project is its last four weeks of commits; no bar, no recent commits.</li>
+      <li>Brightness is attention: in progress glows, ready is plain, backlog is quiet, done is dim. A hollow mark before a card means something upstream still holds it.</li>
+      <li>Near notes are large and bright, far ones small and quiet. A note that would cover a nearer one shows only its dot until you look at it.</li>
+    </ul>
+      </div>
+</div>
+
+<!-- the torch: a soft light around the pointer -->
+<div class="torch" id="torch" aria-hidden="true"></div>
+
+<!-- the year: every day around a circle, your work in the middle -->
+<div class="year" id="year" hidden role="region" aria-label="The year">
+  <canvas id="cvYear" aria-label="The year as a circle: now at the top, the past to the left, what is ahead to the right."></canvas>
+  <div class="year-h">
+    <p class="year-t"><span class="year-k">Year</span><span class="year-r" id="yearR"></span></p>
+    <span class="year-hb"><span class="year-tb" id="yearTools" aria-label="The graph's tools"></span><button class="hud-l" id="yearX">close</button></span>
+  </div>
+  <div class="year-f" id="yearF"></div>
+</div>
+
+<!-- settings: one place for everything you can change -->
+<div class="settings-x" id="settings" hidden role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="x-top">
+    <span class="x-ttl">Settings</span>
+    <nav class="x-tabs" id="xTabs" role="tablist" aria-label="Sections"></nav>
+    <span class="x-pad" id="xPad" aria-hidden="true"><i>LB</i><i>RB</i> section&ensp;<i>A</i> choose&ensp;<i>B</i> back</span>
+    <button class="hud-l x-close" id="xClose">close</button>
+  </div>
+  <div class="x-body">
+    <div class="x-list" id="xList" role="listbox" aria-label="Settings in this section"></div>
+    <aside class="x-side" id="xSide" aria-live="polite"></aside>
+  </div>
+  <p class="x-keys" aria-hidden="true"><kbd>↑</kbd><kbd>↓</kbd> move&emsp;<kbd>←</kbd><kbd>→</kbd> change&emsp;<kbd>Enter</kbd> choose&emsp;<kbd>Q</kbd><kbd>E</kbd> section&emsp;<kbd>Esc</kbd> back</p>
+</div>

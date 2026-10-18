@@ -1,0 +1,13 @@
+# the owner's workspace never enters the public tree: the scan and the curated content (see web/README.md)
+web/src/graph.js
+web/src/seed.js
+web/src/*.prev.js
+web/scan/*.json
+web/scan/*.log
+web/scan/__pycache__/
+# built pages and test shots
+web/dist/
+web/shots/
+web/fonts/node_modules/
+web/fonts/package-lock.json
+local/
