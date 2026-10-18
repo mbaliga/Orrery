@@ -17,10 +17,14 @@
   T.setTextScale = function (v) { UI.text = Math.max(0.75, Math.min(1.5, Math.round(v * 20) / 20)); T.store.set('textScale', UI.text); document.documentElement.style.setProperty('--tx', String(UI.text)); measureTop(); renderSized(); T.emit('scale'); if (T.sfx) T.sfx('tick'); };
   function setMode() {
     var w = window.innerWidth, h = window.innerHeight;
-    var mode = (w / h >= 2.5 && w >= 1900) ? 'pano' : (w >= 760 ? 'split' : 'stack');
+    // the panorama holds from the full G9 down to a window still wide enough for both wings beside the chord
+    var mode = ((w / h >= 2.5 && w >= 1900) || (w >= 2300 && w / h >= 1.85)) ? 'pano' : (w >= 760 ? 'split' : 'stack');
     var root = document.documentElement;
     root.style.setProperty('--tx', String(UI.text));
     if (mode === 'pano') {
+      // the wings take what the chord does not need: the ring is sized by height, so a narrower panorama gives the wings more
+      var ring = Math.min(h * 1.05, w * 0.4), wing = Math.max(0.25, Math.min(0.34, (w - ring) / 2 / w));
+      root.style.setProperty('--wing', (wing * 100).toFixed(1) + 'vw');
       root.style.fontSize = (Math.max(11, Math.min(w / 274, h / 77)) * UI.scale).toFixed(2) + 'px';
       document.body.style.overflow = 'hidden';
     } else {

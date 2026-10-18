@@ -182,7 +182,7 @@
       var go = x0.createLinearGradient(bm.cx - nx * bm.w * 3, bm.cy - ny * bm.w * 3, bm.cx + nx * bm.w * 3, bm.cy + ny * bm.w * 3);
       go.addColorStop(0, 'rgba(' + cs + ',0)'); go.addColorStop(0.5, 'rgba(' + cs + ',' + (bm.a * 1.5) + ')'); go.addColorStop(1, 'rgba(' + cs + ',0)');
       x0.fillStyle = go; x0.fillRect(0, 0, B.W, B.H);
-      B.layers.push({ img: c0, ph: 0, sp: 0.02, swing: 0, amp: 0.3 }); return;
+      B.pad = 0; B.layers.push({ img: c0, ph: 0, sp: 0.02, swing: 0, amp: 0.3 }); return;
     }
     var NL = 4, groups = []; for (var k = 0; k < NL; k++) groups.push([]);
     var cur = -span, i = 0;
@@ -192,8 +192,9 @@
       cur += w * 2 + gap;
     }
     groups.forEach(function (shafts, gi) {
-      var c = document.createElement('canvas'); c.width = Math.round(B.W * B.dpr); c.height = Math.round(B.H * B.dpr);
-      var x = c.getContext('2d'); x.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
+      var PAD = B.pad = Math.round(Math.max(B.W, B.H) * 0.14);
+      var c = document.createElement('canvas'); c.width = Math.round((B.W + PAD * 2) * B.dpr); c.height = Math.round((B.H + PAD * 2) * B.dpr);
+      var x = c.getContext('2d'); x.setTransform(B.dpr, 0, 0, B.dpr, PAD * B.dpr, PAD * B.dpr);
       shafts.forEach(function (sh) {
         var ox = bm.cx + nx * sh.o, oy = bm.cy + ny * sh.o, dx = bm.dx + nx * sh.lean, dy = bm.dy + ny * sh.lean;
         var gx = x.createLinearGradient(ox - nx * sh.w, oy - ny * sh.w, ox + nx * sh.w, oy + ny * sh.w);
@@ -208,11 +209,11 @@
       x.globalCompositeOperation = 'destination-in';
       var ga = x.createLinearGradient(bm.cx - bm.dx * B.H * 0.7, bm.cy - bm.dy * B.H * 0.7, bm.cx + bm.dx * B.H * 0.7, bm.cy + bm.dy * B.H * 0.7);
       ga.addColorStop(0, 'rgba(0,0,0,1)'); ga.addColorStop(1, 'rgba(0,0,0,.2)');
-      x.fillStyle = ga; x.fillRect(0, 0, B.W, B.H);
+      x.fillStyle = ga; x.fillRect(-PAD, -PAD, B.W + PAD * 2, B.H + PAD * 2);
       // this layer's own leaves
       x.globalCompositeOperation = 'destination-out';
       for (var j = 0; j < 9; j++) {
-        var px = r() * B.W, py = r() * B.H, rr = Math.max(B.W, B.H) * (0.03 + r() * 0.09);
+        var px = -PAD + r() * (B.W + PAD * 2), py = -PAD + r() * (B.H + PAD * 2), rr = Math.max(B.W, B.H) * (0.03 + r() * 0.09);
         var gl = x.createRadialGradient(px, py, 0, px, py, rr);
         gl.addColorStop(0, 'rgba(0,0,0,' + (0.55 + r() * 0.4) + ')'); gl.addColorStop(0.6, 'rgba(0,0,0,' + (0.2 + r() * 0.3) + ')'); gl.addColorStop(1, 'rgba(0,0,0,0)');
         x.fillStyle = gl; x.beginPath(); x.ellipse(px, py, rr * (0.6 + r() * 0.8), rr, r() * 3.14, 0, 6.283); x.fill();
@@ -252,7 +253,7 @@
         var grow = move ? 1 + ly.grow * Math.sin(t * ly.sp * 0.8 + ly.ph + 1) : 1;
         g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = Math.max(0, Math.min(1, bright * breathe));
         g.translate(cxp + nx0 * sway * B.dpr, cyp + ny0 * sway * B.dpr); g.rotate(move ? Math.sin(t * ly.sp * 0.5 + ly.ph) * 0.01 : 0); g.scale(grow, grow); g.translate(-cxp, -cyp);
-        g.drawImage(ly.img, 0, 0); g.restore();
+        g.drawImage(ly.img, -(B.pad || 0) * B.dpr, -(B.pad || 0) * B.dpr); g.restore();
       });
       g.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
     }

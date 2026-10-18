@@ -2,7 +2,7 @@
 // steps: ["key:,", "move:x,y", "click:x,y", "wait:ms", "eval:js", "shot:name", "shotclip:name:x,y,w,h", "hash:year"]
 const { chromium } = require('/opt/npm-tools/node_modules/playwright');
 const path = require('path');
-const SIZES = { g9: [5120, 1440, 1], g9low: [3840, 1080, 1], ipad: [1376, 1032, 2], ipadp: [1032, 1376, 2], pane: [834, 1000, 2], phone: [412, 915, 3], laptop: [1440, 900, 1], desk: [1920, 1080, 1] };
+const SIZES = { g9: [5120, 1440, 1], g9low: [3840, 1080, 1], mid: [3000, 1400, 1], mid2: [2400, 1300, 1], ipad: [1376, 1032, 2], ipadp: [1032, 1376, 2], pane: [834, 1000, 2], phone: [412, 915, 3], laptop: [1440, 900, 1], desk: [1920, 1080, 1] };
 (async () => {
   const name = process.argv[2], steps = JSON.parse(process.argv[3] || '[]'), hash = process.argv[4] || '';
   const [w, h, dpr] = SIZES[name];
