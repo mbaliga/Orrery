@@ -401,7 +401,7 @@
       if (p.recent) {
         var live = Date.now() - p.lastAt < 3 * 36e5, br = reduce || !live ? 1 : 0.8 + 0.2 * Math.sin(t * TAU / 5 + p.ph), rr = p.R * (2.6 + 1.4 * L) * br;
         var hg = g.createRadialGradient(p.X, p.Y, 0, p.X, p.Y, rr);
-        hg.addColorStop(0, rgba(col, (0.24 + 0.3 * p.act + 0.2 * L) * gr)); hg.addColorStop(1, rgba(col, 0));
+        hg.addColorStop(0, rgba(col, (0.24 + 0.3 * p.act + 0.2 * L) * gr * (T.breath ? T.breath(now) : 1))); hg.addColorStop(1, rgba(col, 0));
         g.fillStyle = hg; g.beginPath(); g.arc(p.X, p.Y, rr, 0, TAU); g.fill();
       }
       g.fillStyle = rgba(col, (p.recent ? 0.62 + 0.38 * p.act : 0.42) * (L ? 1 : 0.7 + 0.3 * dim) * gr);

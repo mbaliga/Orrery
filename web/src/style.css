@@ -724,7 +724,7 @@ html.lean-back body{overflow:hidden}
 }
 
 /* ================= the sunbeam and the torch ================= */
-#cvBeam{position:fixed;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;opacity:calc(1 - var(--near) * .3);mix-blend-mode:screen}
+#cvBeam{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;opacity:calc(1 - var(--near) * .3);mix-blend-mode:screen}
 .torch{position:fixed;left:0;top:0;z-index:85;width:18rem;height:18rem;margin:-9rem 0 0 -9rem;border-radius:50%;pointer-events:none;opacity:0;
   background:radial-gradient(circle closest-side,rgba(236,232,228,.07) 0,rgba(236,232,228,.028) 42%,rgba(236,232,228,0) 100%);
   -webkit-backdrop-filter:brightness(1.38);backdrop-filter:brightness(1.38);
@@ -1107,3 +1107,8 @@ html.bodying body{overflow:hidden}
 .wx svg{width:1.05rem;height:1.05rem;display:block}
 .wx b{font-weight:400;color:var(--ink-2)}
 #app[data-mode="stack"] .wx{display:inline-flex}
+
+/* the breath: when it is on, --breath runs 0.72–1 ten seconds round, and whatever glows follows it */
+:root{--breath:1}
+.kcard[data-s="doing"] .kcard-t::before,.heat i[data-l="4"],.note-new::before{filter:brightness(calc(.7 + .3 * var(--breath)))}
+.kcard[data-s="doing"]{opacity:calc(.9 + .1 * var(--breath))}

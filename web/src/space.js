@@ -1507,6 +1507,7 @@
   T.canopyHome = function () { C.yawT = 0; C.tiltT = C.tilt0; C.zoomT = C.zoom0 || 1; C.dirty = true; };
   T.canopyRedraw = function () { C.dirty = true; };
   T.canopyStars = function () { C.starsDirty = true; };
+  T.canopyStarsAlpha = function (a) { if (C.stars) C.stars.style.opacity = a >= 1 ? '' : String(0.75 + 0.25 * a); };
   T.canopyFocus = function (v) { C.focusT = v; C.dirty = true; };
   T.canopySet = function (k, v) {
     if (k === 'depth') { C.flat = !v; C.pxT = C.pyT = 0; C.hover = null; }

@@ -244,7 +244,7 @@
     if (B.layers && B.layers.length) {
       // the light is alive: each layer sways on its own tempo, flickers as leaves cross it, swells and thins; the
       // whole may breathe at a resting pace, six to the minute
-      var t = now / 1000, move = T.store.get('beamMove', true) && !reduce, breathe = T.store.get('beamBreathe', false) && !reduce ? 0.72 + 0.28 * (0.5 + 0.5 * Math.sin(t * 2 * Math.PI / 10)) : 1;
+      var t = now / 1000, move = T.store.get('beamMove', true) && !reduce, breathe = T.breath(now);
       var nx0 = bm ? -bm.dy : 0, ny0 = bm ? bm.dx : 0, cxp = B.W * B.dpr / 2, cyp = B.H * B.dpr / 2;
       B.layers.forEach(function (ly) {
         var sway = move ? Math.sin(t * ly.sp + ly.ph) * ly.swing + Math.sin(t * ly.sp * 0.37 + ly.ph * 2) * ly.swing * 0.5 : 0;
@@ -293,6 +293,22 @@
     }
   };
   T.beamOn = function () { return B.on; };
+  // the breath: one slow swell every ten seconds — six to the minute, a resting rate — that every glow on the page
+  // shares when it is on: the light, the stars, the sky's halos, the marks that glow in the wings
+  var BR = { on: T.store.get('beamBreathe', false), raf: 0, last: 0 };
+  T.breath = function (now) { if (!BR.on || reduce) return 1; var t = (now || performance.now()) / 1000; return 0.72 + 0.28 * (0.5 + 0.5 * Math.sin(t * 2 * Math.PI / 10)); };
+  function breathFrame(now) {
+    if (!BR.on) return;
+    BR.raf = requestAnimationFrame(breathFrame);
+    if (document.hidden || now - BR.last < 100) return;
+    BR.last = now;
+    document.documentElement.style.setProperty('--breath', T.breath(now).toFixed(3));
+    if (T.canopyStarsAlpha) T.canopyStarsAlpha(T.breath(now));
+  }
+  T.setBreathe = function (on) {
+    BR.on = !!on; T.store.set('beamBreathe', BR.on); cancelAnimationFrame(BR.raf);
+    if (BR.on) BR.raf = requestAnimationFrame(breathFrame); else { document.documentElement.style.removeProperty('--breath'); if (T.canopyStarsAlpha) T.canopyStarsAlpha(1); }
+  };
   T.setBeamGain = function (v) { T.store.set('beamGain', Math.max(0.25, Math.min(4, +v || 1))); if (B.on) drawBeamImage(); };
   T.beamResize = function () { if (B.on) beamSize(); };
   T.beamInfo = function () {
@@ -359,6 +375,7 @@
     if (B.cv) { B.g = B.cv.getContext('2d'); window.addEventListener('resize', function () { if (B.on) beamSize(); }); }
     T.setBeam(T.store.get('beam', false), true);
     T.initWeather();
+    if (BR.on) T.setBreathe(true);
     TO.el = T.$('#torch');
     TO.r = (parseFloat(getComputedStyle(root).fontSize) || 16) * 9;
     window.addEventListener('pointermove', torchMove, { passive: true });
