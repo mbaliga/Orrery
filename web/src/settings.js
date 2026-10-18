@@ -55,6 +55,17 @@
           about: 'Short tones made on this device as you move through menus, choose, open and finish things: a blip for a move, two notes up for a choice, a short rising figure when something is done. Nothing is loaded; a few oscillators make them.' },
         { id: 'sfxVol', label: 'Sound level', kind: 'range', min: 0, max: 100, step: 5, unit: '%', get: function () { return T.sfxVol(); }, set: function (v) { T.setSfxVol(v); },
           about: 'How loud the interface tones are. The focus sounds have their own volume in the Focus module.' },
+        { id: 'room', label: 'The room', kind: 'choice', options: [['off', 'Quiet'], ['rain', 'Rain'], ['storm', 'Storm'], ['fire', 'Fire'], ['wind', 'Wind'], ['forest', 'Forest'], ['sea', 'Sea']],
+          get: function () { return T.ambience.kind(); }, set: function (v) { T.ambience.set(v); },
+          about: 'A background sound for the room: rain, a storm with thunder, a fire that crackles, wind, a forest with birds, the sea. All of it is shaped noise and a few oscillators made on this device — nothing is fetched or recorded. Plays only while the page is open.' },
+        { id: 'roomLevel', label: 'Room level', kind: 'range', min: 0, max: 100, step: 5, unit: '%', get: function () { return Math.round(T.ambience.level() * 100); }, set: function (v) { T.ambience.level(v / 100); },
+          about: 'How loud the room is.' },
+        { id: 'muse', label: 'Music from a prompt', kind: 'text', placeholder: 'heroic questing music', get: function () { return T.store.get('musePrompt', ''); }, set: function (v) { T.store.set('musePrompt', v); },
+          about: function () { var p = T.store.get('musePrompt', ''); var r = p ? ASOC.muse.read(p) : null; return 'Write what you want to hear — “heroic questing music”, “fast techno for a race”, “quiet rain piano”, “dark drone, no drums”, “120 bpm bright pop” — and press Play. A rule-based composer on this device reads the words and picks tempo, mode, instruments and patterns; it is not a model, so it will not surprise you, and it never phones anyone. A model that writes music belongs to the routing engine, with your own key, later.' + (r ? ' This prompt reads as: ' + r.read + ' — ' + r.bpm + ' bpm, ' + r.mode + ', drums ' + r.drums + ', bass ' + r.bass + ', lead ' + r.lead + ', pad ' + r.pad + '.' : ''); } },
+        { id: 'musePlay', label: 'Play / stop', kind: 'action', get: function () { return T.muse.playing(); }, run: function () { if (T.muse.playing()) T.muse.stop(); else T.muse.play(T.store.get('musePrompt', '') || 'a steady mood'); },
+          about: 'Starts or stops the music made from the prompt above.' },
+        { id: 'museLevel', label: 'Music level', kind: 'range', min: 0, max: 100, step: 5, unit: '%', get: function () { return Math.round(T.muse.level() * 100); }, set: function (v) { T.muse.level(v / 100); },
+          about: 'How loud the music is.' },
         { id: 'motion', label: 'Motion', kind: 'choice', options: [['on', 'Sway'], ['off', 'Still']],
           get: function () { return C().drift ? 'on' : 'off'; }, set: function (v) { T.canopySet('drift', v === 'on'); if (T.pixelShift) T.pixelShift(true); },
           about: 'Sway turns the chord about two degrees over four minutes and shifts the view a pixel or two every few minutes, so nothing bright sits still on an OLED panel. Still keeps everything in place.' },
@@ -202,10 +213,16 @@
   function valueNode(r, i) {
     var v = val(r);
     if (r.kind === 'choice') return el('span', { class: 'x-v x-choice' }, el('i', { class: 'x-ar', 'aria-hidden': 'true' }, '‹'), el('b', null, optName(r, v)), el('i', { class: 'x-ar', 'aria-hidden': 'true' }, '›'));
-    if (r.kind === 'toggle') return el('span', { class: 'x-v x-toggle', 'data-on': v ? '1' : '0' }, el('b', null, v ? 'On' : 'Off'), el('i', { class: 'x-sw', 'aria-hidden': 'true' }));
+    if (r.kind === 'toggle') return el('span', { class: 'x-v x-toggle', 'data-on': v ? '1' : '0' }, el('b', null, v ? 'On' : 'Off'),
+      el('i', { class: 'x-sw', 'aria-hidden': 'true' }, el('i', { class: 'x-sw-t' }), el('i', { class: 'x-sw-f' }), el('i', { class: 'x-sw-k', html: '<svg viewBox="-7 -7 14 14">' + T.cellMark(r.id, { fill: 'currentColor', wob: 0.08 }) + '</svg>' })));
     if (r.kind === 'range') {
       var k = (v - r.min) / (r.max - r.min);
-      return el('span', { class: 'x-v x-range' }, el('span', { class: 'x-bar' }, el('i', { style: { width: (k * 100).toFixed(1) + '%' } })), el('b', null, v + (r.unit || '')));
+      var bar = el('span', { class: 'x-bar', on: { pointerdown: function (ev) { rangeDrag(ev, r, i); } } },
+        el('i', { class: 'x-end', html: '<svg viewBox="-7 -7 14 14">' + T.cellMark(r.id + 'a', { fill: 'currentColor', wob: 0.2 }) + '</svg>' }),
+        el('i', { class: 'x-fill', style: { width: (k * 100).toFixed(1) + '%' } }),
+        el('i', { class: 'x-end r', html: '<svg viewBox="-7 -7 14 14">' + T.cellMark(r.id + 'b', { fill: 'currentColor', wob: 0.2 }) + '</svg>' }),
+        el('i', { class: 'x-th', style: { left: (k * 100).toFixed(1) + '%' }, html: '<svg viewBox="-7 -7 14 14">' + T.cellMark(r.id, { fill: 'currentColor', wob: 0.12 }) + '</svg>' }));
+      return el('span', { class: 'x-v x-range' }, bar, el('b', null, v + (r.unit || '')));
     }
     if (r.kind === 'swatch') {
       var wrap = el('span', { class: 'x-v x-sws' });
@@ -228,7 +245,7 @@
       return el('span', { class: 'x-v x-filev' }, v ? el('img', { src: v, alt: '' }) : null, el('b', null, v ? 'Replace' : 'Choose'), f);
     }
     if (r.kind === 'connector') return el('span', { class: 'x-v x-status', 'data-live': r.live ? '1' : '0' }, el('b', null, typeof r.status === 'function' ? r.status() : r.status));
-    if (r.kind === 'action') return el('span', { class: 'x-v x-go' + (r.danger ? ' warn' : '') }, el('b', null, r.danger && X.confirm === 'reset' ? 'Press again' : ''), el('i', { 'aria-hidden': 'true' }, '›'));
+    if (r.kind === 'action') return el('span', { class: 'x-v x-go' + (r.danger ? ' warn' : '') }, el('b', null, r.danger && X.confirm === 'reset' ? 'Press again' : (r.get ? (r.get() ? 'Playing' : '') : '')), el('i', { 'aria-hidden': 'true' }, r.get && r.get() ? '■' : '›'));
     return el('span', { class: 'x-v' }, el('b', null, v || ''));
   }
   function paint() {
@@ -288,6 +305,15 @@
 
   // ---------------------------------------------------------------- acting
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  // drag a slider's thumb, or tap anywhere on its rail; the value snaps to the row's step and ticks as it crosses one
+  function rangeDrag(ev, r, i) {
+    ev.preventDefault(); ev.stopPropagation(); X.focus = i; mark();
+    var bar = ev.currentTarget, rect = bar.getBoundingClientRect(), last = val(r);
+    function at(x) { var k = clamp((x - rect.left) / rect.width, 0, 1), v = r.min + Math.round(k * (r.max - r.min) / r.step) * r.step; v = +clamp(v, r.min, r.max).toFixed(3); if (v !== last) { last = v; r.set(v); if (T.sfx) T.sfx('tick'); paint(); } }
+    at(ev.clientX);
+    function mv(e) { at(e.clientX); } function up() { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); }
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+  }
   function go(i) { X.tab = (i + TABS.length) % TABS.length; X.focus = 0; X.confirm = null; lastFocus = -1; if (T.sfx) T.sfx('select'); paint(); }
   function move(d) { X.focus = clamp(X.focus + d, 0, X.rows.length - 1); mark(); }
   function act(d, enter) {

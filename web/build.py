@@ -25,7 +25,7 @@ def read(name):
 FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
          'family=Archivo:wdth,wght@62..125,100..900&family=JetBrains+Mono:wght@300..600&display=swap">')
 # the shared kit (Shared-Libraries-asoc/web/orrery-kit): read from the sibling checkout when it is there, else the vendored copy
-KIT = ["cells.js", "sfx.js", "rose.js", "brands.js", "graph.js", "gantt.js"]
+KIT = ["cells.js", "sfx.js", "ambience.js", "rose.js", "brands.js", "graph.js", "gantt.js"]
 KIT_SRC = next((d for d in [os.path.join(HERE, "..", "..", "..", "..", "..", "..", "home", "claude", "shared-libraries-asoc", "web", "orrery-kit"),
                              "/home/claude/shared-libraries-asoc/web/orrery-kit", os.path.join(SRC, "vendor", "orrery-kit")] if os.path.isdir(d)), None)
 def read_kit(name):

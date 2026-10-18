@@ -770,14 +770,28 @@ html.setting body{overflow:hidden}
 .x-ar{font-style:normal;color:var(--ink-4);font-size:1.15em;line-height:1;transition:color var(--fast) var(--ease)}
 .x-row.on .x-ar{color:var(--ink-2)}
 .x-choice b{min-width:3.4rem;text-align:center}
-.x-toggle .x-sw{width:2.2rem;height:1.2rem;border-radius:99px;box-shadow:inset 0 0 0 1px var(--ink-3);position:relative;transition:background var(--fast) var(--ease)}
-.x-toggle .x-sw::after{content:"";position:absolute;top:.225rem;left:.225rem;width:.75rem;height:.75rem;border-radius:50%;background:var(--ink-3);
-  transition:transform .18s var(--ease),background .18s var(--ease)}
-.x-toggle[data-on="1"] .x-sw{background:rgba(236,232,228,.16);box-shadow:inset 0 0 0 1px var(--ink-2)}
-.x-toggle[data-on="1"] .x-sw::after{transform:translateX(1rem);background:var(--ink-solid)}
+/* the toggle, in Hyle's material: a knob of surface in a lit slot; state shown by where the knob sits and the slot's light */
+.x-toggle .x-sw{width:2.7rem;height:1.3rem;border-radius:99px;position:relative;display:block;background:#050506;
+  box-shadow:0 2px 4px rgba(0,0,0,.6) inset,0 1px 2px rgba(0,0,0,.5) inset,0 1px 0 rgba(255,255,255,.1);transition:background var(--fast) var(--ease)}
+.x-toggle .x-sw-f{position:absolute;inset:0;border-radius:99px;background:var(--violet);opacity:0;transition:opacity var(--fast) var(--ease)}
+.x-toggle .x-sw-k{position:absolute;top:.14rem;left:.14rem;width:1.02rem;height:1.02rem;color:#2a2a32;display:block;transition:transform var(--fast) var(--ease);
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)) drop-shadow(0 0 0 rgba(255,255,255,.1))}
+.x-toggle .x-sw-k svg{display:block;width:100%;height:100%;overflow:visible}
+.x-toggle .x-sw-k svg path{stroke:rgba(255,255,255,.16);stroke-width:.6}
+.x-toggle[data-on="1"] .x-sw-f{opacity:.32}
+.x-toggle[data-on="1"] .x-sw-k{transform:translateX(1.4rem);color:#f2f0ff}
 .x-toggle[data-on="0"] b{color:var(--ink-3)}
-.x-range .x-bar{width:8rem;height:2px;background:var(--hair-2);position:relative;border-radius:2px}
-.x-range .x-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink);border-radius:2px}
+/* the slider: a hairline rail with a cell at each end and a cell for the thumb — Hyle's hairline/pan, with organic ends */
+.x-range .x-bar{width:8rem;height:1.1rem;position:relative;cursor:pointer;touch-action:none;display:block}
+.x-range .x-bar::before{content:"";position:absolute;left:.3rem;right:.3rem;top:50%;height:1px;background:var(--hair-2);transform:translateY(-50%)}
+.x-range .x-fill{position:absolute;left:.3rem;top:50%;height:2px;background:var(--violet);transform:translateY(-50%);border-radius:2px;max-width:calc(100% - .6rem);pointer-events:none}
+.x-range .x-end{position:absolute;top:50%;left:0;width:.6rem;height:.6rem;transform:translateY(-50%);color:var(--ink-4);display:block}
+.x-range .x-end.r{left:auto;right:0}
+.x-range .x-th{position:absolute;top:50%;width:1.05rem;height:1.05rem;transform:translate(-50%,-50%);color:#2a2a32;display:block;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));transition:left var(--fast) var(--ease)}
+.x-range .x-th svg path,.x-range .x-end svg path{stroke:rgba(255,255,255,.2);stroke-width:.6}
+.x-range .x-th svg,.x-range .x-end svg{display:block;width:100%;height:100%;overflow:visible}
+.x-row.on .x-range .x-th{color:#f2f0ff}
 .x-range b{font-family:var(--mono);font-size:var(--fs-xs);min-width:4.8rem;text-align:right}
 .x-sws{gap:.6rem}
 .x-sw-c{width:1.5rem;height:1.5rem;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(236,232,228,.24);position:relative;display:grid;place-items:center;cursor:pointer;flex:none}
@@ -831,7 +845,7 @@ html.setting body{overflow:hidden}
   .x-side.inline .x-sa{font-size:.875rem;line-height:1.55}
   .x-side.inline .x-prev{margin-top:1rem}
   .x-text{width:11rem}
-  .x-range .x-bar{width:5rem}
+  .x-range .x-bar{width:5.5rem}
 }
 
 /* ================= the year: every day around a circle ================= */
