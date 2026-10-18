@@ -35,7 +35,7 @@
         { id: 'wxPlace', label: 'Place', kind: 'text', placeholder: 'A town or city', get: function () { return T.weather().place; }, set: function (v) { T.setWeatherPlace(v); },
           about: 'A town or city. It is looked up once through open-meteo’s geocoder and only the coordinates are kept, which also place the sun and the moon by the real sky instead of by the clock.' },
         { id: 'beamMove', label: 'Light moves', kind: 'toggle', get: function () { return T.store.get('beamMove', true); }, set: function (v) { T.store.set('beamMove', !!v); },
-          about: 'The shafts sway slowly across their own width, as light through leaves does. Off, the light holds still and only turns with the sun. Honours a reduced-motion setting either way.' },
+          about: 'Four layers of shafts, each on its own tempo: they sway, brighten and thin, a gap opens here as one closes there, as foliage moves in a breeze. Off, the light holds still and only turns with the sun. Honours a reduced-motion setting either way.' },
         { id: 'beamBreathe', label: 'Light breathes', kind: 'toggle', get: function () { return T.store.get('beamBreathe', false); }, set: function (v) { T.store.set('beamBreathe', !!v); },
           about: 'The glow swells and fades at a resting breath, six to the minute — something to breathe with when the room is still. Calm computing, not a notification.' },
         { id: 'beamGain', label: 'Sunbeam strength', kind: 'range', min: 25, max: 400, step: 25, unit: '%', get: function () { return Math.round((T.store.get('beamGain', 1) || 1) * 100); }, set: function (v) { T.setBeamGain(v / 100); },

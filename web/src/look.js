@@ -168,51 +168,59 @@
     // cloud takes the shafts apart: under an overcast sky what is left is a faint, even glow
     return { t: t, ang: ang, col: col, cx: cx, cy: cy, dx: dx, dy: dy, w: w, a: a * (1 - 0.8 * c.clouds), clouds: c.clouds, kind: c.kind, moon: c.kind === 'moon' };
   }
+  // the light is several layers of shafts, each drawn once and then moved on its own: one layer sways while another
+  // brightens, a gap opens here as one closes there, the way foliage never moves as one piece
   function drawBeamImage() {
-    var bm = B.beam = beamGeom(), c = document.createElement('canvas');
-    B.beamAt = Date.now();
+    var bm = B.beam = beamGeom();
+    B.beamAt = Date.now(); B.layers = [];
     if (!bm) { B.beamImg = null; return; }
-    c.width = Math.round(B.W * B.dpr); c.height = Math.round(B.H * B.dpr);
-    var x = c.getContext('2d'), L = Math.hypot(B.W, B.H) * 1.6, nx = -bm.dy, ny = bm.dx, cs = bm.col.join(',');
-    x.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
-    // light through foliage: not one shaft but several, of different widths and brightness, with gaps between, the
-    // way sun comes through a tree. The pattern is seeded by the day, so it holds still and only turns with the sun.
-    var r = rng(0.17 + (new Date().getDate() % 7) * 0.11), shafts = [], span = bm.w * 4.2, cur = -span, loose = bm.moon ? 1.6 : 1;
-    if (bm.kind === 'overcast') {   // one even glow, no leaves
-      var go = x.createLinearGradient(bm.cx - nx * bm.w * 3, bm.cy - ny * bm.w * 3, bm.cx + nx * bm.w * 3, bm.cy + ny * bm.w * 3);
+    var L = Math.hypot(B.W, B.H) * 1.6, nx = -bm.dy, ny = bm.dx, cs = bm.col.join(',');
+    var r = rng(0.17 + (new Date().getDate() % 7) * 0.11), span = bm.w * 4.2, loose = bm.moon ? 1.6 : 1;
+    if (bm.kind === 'overcast') {
+      var c0 = document.createElement('canvas'); c0.width = Math.round(B.W * B.dpr); c0.height = Math.round(B.H * B.dpr);
+      var x0 = c0.getContext('2d'); x0.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
+      var go = x0.createLinearGradient(bm.cx - nx * bm.w * 3, bm.cy - ny * bm.w * 3, bm.cx + nx * bm.w * 3, bm.cy + ny * bm.w * 3);
       go.addColorStop(0, 'rgba(' + cs + ',0)'); go.addColorStop(0.5, 'rgba(' + cs + ',' + (bm.a * 1.5) + ')'); go.addColorStop(1, 'rgba(' + cs + ',0)');
-      x.fillStyle = go; x.fillRect(0, 0, B.W, B.H); B.beamImg = c; return;
+      x0.fillStyle = go; x0.fillRect(0, 0, B.W, B.H);
+      B.layers.push({ img: c0, ph: 0, sp: 0.02, swing: 0, amp: 0.3 }); return;
     }
+    var NL = 4, groups = []; for (var k = 0; k < NL; k++) groups.push([]);
+    var cur = -span, i = 0;
     while (cur < span) {
-      var w = bm.w * (0.08 + r() * 0.42), gap = bm.w * (0.12 + r() * 0.7) * loose;
-      shafts.push({ o: cur + w, w: w, a: bm.a * (0.55 + r() * 0.9), lean: (r() - 0.5) * 0.05 });
+      var w = bm.w * (0.06 + r() * 0.4), gap = bm.w * (0.1 + r() * 0.6) * loose;
+      groups[i++ % NL].push({ o: cur + w, w: w, a: bm.a * (0.5 + r() * 0.9), lean: (r() - 0.5) * 0.05 });
       cur += w * 2 + gap;
     }
-    shafts.forEach(function (sh) {
-      var ox = bm.cx + nx * sh.o, oy = bm.cy + ny * sh.o, dx = bm.dx + nx * sh.lean, dy = bm.dy + ny * sh.lean;
-      var gx = x.createLinearGradient(ox - nx * sh.w, oy - ny * sh.w, ox + nx * sh.w, oy + ny * sh.w);
-      gx.addColorStop(0, 'rgba(' + cs + ',0)'); gx.addColorStop(0.3, 'rgba(' + cs + ',' + sh.a + ')'); gx.addColorStop(0.5, 'rgba(' + cs + ',' + (sh.a * 1.3) + ')');
-      gx.addColorStop(0.7, 'rgba(' + cs + ',' + sh.a + ')'); gx.addColorStop(1, 'rgba(' + cs + ',0)');
-      x.fillStyle = gx;
-      x.beginPath();
-      x.moveTo(ox - dx * L - nx * sh.w, oy - dy * L - ny * sh.w); x.lineTo(ox - dx * L + nx * sh.w, oy - dy * L + ny * sh.w);
-      x.lineTo(ox + dx * L + nx * sh.w * 1.5, oy + dy * L + ny * sh.w * 1.5); x.lineTo(ox + dx * L - nx * sh.w * 1.5, oy + dy * L - ny * sh.w * 1.5);
-      x.closePath(); x.fill();
+    groups.forEach(function (shafts, gi) {
+      var c = document.createElement('canvas'); c.width = Math.round(B.W * B.dpr); c.height = Math.round(B.H * B.dpr);
+      var x = c.getContext('2d'); x.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
+      shafts.forEach(function (sh) {
+        var ox = bm.cx + nx * sh.o, oy = bm.cy + ny * sh.o, dx = bm.dx + nx * sh.lean, dy = bm.dy + ny * sh.lean;
+        var gx = x.createLinearGradient(ox - nx * sh.w, oy - ny * sh.w, ox + nx * sh.w, oy + ny * sh.w);
+        gx.addColorStop(0, 'rgba(' + cs + ',0)'); gx.addColorStop(0.3, 'rgba(' + cs + ',' + sh.a + ')'); gx.addColorStop(0.5, 'rgba(' + cs + ',' + (sh.a * 1.3) + ')');
+        gx.addColorStop(0.7, 'rgba(' + cs + ',' + sh.a + ')'); gx.addColorStop(1, 'rgba(' + cs + ',0)');
+        x.fillStyle = gx; x.beginPath();
+        x.moveTo(ox - dx * L - nx * sh.w, oy - dy * L - ny * sh.w); x.lineTo(ox - dx * L + nx * sh.w, oy - dy * L + ny * sh.w);
+        x.lineTo(ox + dx * L + nx * sh.w * 1.5, oy + dy * L + ny * sh.w * 1.5); x.lineTo(ox + dx * L - nx * sh.w * 1.5, oy + dy * L - ny * sh.w * 1.5);
+        x.closePath(); x.fill();
+      });
+      // brightest where the light comes in, fading across the room
+      x.globalCompositeOperation = 'destination-in';
+      var ga = x.createLinearGradient(bm.cx - bm.dx * B.H * 0.7, bm.cy - bm.dy * B.H * 0.7, bm.cx + bm.dx * B.H * 0.7, bm.cy + bm.dy * B.H * 0.7);
+      ga.addColorStop(0, 'rgba(0,0,0,1)'); ga.addColorStop(1, 'rgba(0,0,0,.2)');
+      x.fillStyle = ga; x.fillRect(0, 0, B.W, B.H);
+      // this layer's own leaves
+      x.globalCompositeOperation = 'destination-out';
+      for (var j = 0; j < 9; j++) {
+        var px = r() * B.W, py = r() * B.H, rr = Math.max(B.W, B.H) * (0.03 + r() * 0.09);
+        var gl = x.createRadialGradient(px, py, 0, px, py, rr);
+        gl.addColorStop(0, 'rgba(0,0,0,' + (0.55 + r() * 0.4) + ')'); gl.addColorStop(0.6, 'rgba(0,0,0,' + (0.2 + r() * 0.3) + ')'); gl.addColorStop(1, 'rgba(0,0,0,0)');
+        x.fillStyle = gl; x.beginPath(); x.ellipse(px, py, rr * (0.6 + r() * 0.8), rr, r() * 3.14, 0, 6.283); x.fill();
+      }
+      // each layer has its own tempo: how fast it sways, how far, how much it flickers and how it breathes in size
+      B.layers.push({ img: c, ph: r() * 6.283, sp: 0.05 + r() * 0.09, swing: bm.w * (0.1 + r() * 0.25) * (gi % 2 ? 1 : -1), amp: 0.25 + r() * 0.35, fl: 0.6 + r() * 1.4, grow: 0.01 + r() * 0.025 });
     });
-    // along the light: brightest where it comes in, fading as it crosses the room
-    x.globalCompositeOperation = 'destination-in';
-    var ga = x.createLinearGradient(bm.cx - bm.dx * B.H * 0.7, bm.cy - bm.dy * B.H * 0.7, bm.cx + bm.dx * B.H * 0.7, bm.cy + bm.dy * B.H * 0.7);
-    ga.addColorStop(0, 'rgba(0,0,0,1)'); ga.addColorStop(1, 'rgba(0,0,0,.2)');
-    x.fillStyle = ga; x.fillRect(0, 0, B.W, B.H);
-    // the leaves: soft shadows that interrupt the shafts here and there
-    x.globalCompositeOperation = 'destination-out';
-    for (var i = 0; i < 26; i++) {
-      var px = r() * B.W, py = r() * B.H, rr = Math.max(B.W, B.H) * (0.03 + r() * 0.09);
-      var gl = x.createRadialGradient(px, py, 0, px, py, rr);
-      gl.addColorStop(0, 'rgba(0,0,0,' + (0.55 + r() * 0.4) + ')'); gl.addColorStop(0.6, 'rgba(0,0,0,' + (0.2 + r() * 0.3) + ')'); gl.addColorStop(1, 'rgba(0,0,0,0)');
-      x.fillStyle = gl; x.beginPath(); x.ellipse(px, py, rr * (0.6 + r() * 0.8), rr, r() * 3.14, 0, 6.283); x.fill();
-    }
-    B.beamImg = c;
+    B.beamImg = B.layers.length ? true : null;
   }
   function beamSize() {
     if (!B.cv) return;
@@ -232,15 +240,21 @@
     var g = B.g, W = B.W, H = B.H, bm = B.beam;
     g.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
     g.clearRect(0, 0, W, H);
-    if (B.beamImg) {
-      // the light moves: the shafts sway slowly across their own width as leaves would, and may breathe —
-      // a slow swell and fade at a resting breath, about six to the minute
-      var t = now / 1000, sway = T.store.get('beamMove', true) && !reduce ? Math.sin(t * 0.11) * bm.w * 0.22 + Math.sin(t * 0.047 + 1.3) * bm.w * 0.12 : 0;
-      var breathe = T.store.get('beamBreathe', false) && !reduce ? 0.72 + 0.28 * (0.5 + 0.5 * Math.sin(t * 2 * Math.PI / 10)) : 1;
-      var nx0 = bm ? -bm.dy : 0, ny0 = bm ? bm.dx : 0;
-      g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = breathe;
-      g.translate(B.W * B.dpr / 2, B.H * B.dpr / 2); g.rotate(sway ? Math.sin(t * 0.03) * 0.012 : 0); g.translate(-B.W * B.dpr / 2 + nx0 * sway * B.dpr, -B.H * B.dpr / 2 + ny0 * sway * B.dpr);
-      g.drawImage(B.beamImg, 0, 0); g.restore(); g.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
+    if (B.layers && B.layers.length) {
+      // the light is alive: each layer sways on its own tempo, flickers as leaves cross it, swells and thins; the
+      // whole may breathe at a resting pace, six to the minute
+      var t = now / 1000, move = T.store.get('beamMove', true) && !reduce, breathe = T.store.get('beamBreathe', false) && !reduce ? 0.72 + 0.28 * (0.5 + 0.5 * Math.sin(t * 2 * Math.PI / 10)) : 1;
+      var nx0 = bm ? -bm.dy : 0, ny0 = bm ? bm.dx : 0, cxp = B.W * B.dpr / 2, cyp = B.H * B.dpr / 2;
+      B.layers.forEach(function (ly) {
+        var sway = move ? Math.sin(t * ly.sp + ly.ph) * ly.swing + Math.sin(t * ly.sp * 0.37 + ly.ph * 2) * ly.swing * 0.5 : 0;
+        // brightness: a slow swell with a quicker, smaller shimmer on top, never dropping out entirely
+        var bright = move ? 1 - ly.amp * (0.5 + 0.5 * Math.sin(t * ly.sp * 1.7 + ly.ph)) - 0.08 * Math.sin(t * ly.fl * 2.1 + ly.ph) * Math.sin(t * ly.fl * 0.9) : 1;
+        var grow = move ? 1 + ly.grow * Math.sin(t * ly.sp * 0.8 + ly.ph + 1) : 1;
+        g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = Math.max(0, Math.min(1, bright * breathe));
+        g.translate(cxp + nx0 * sway * B.dpr, cyp + ny0 * sway * B.dpr); g.rotate(move ? Math.sin(t * ly.sp * 0.5 + ly.ph) * 0.01 : 0); g.scale(grow, grow); g.translate(-cxp, -cyp);
+        g.drawImage(ly.img, 0, 0); g.restore();
+      });
+      g.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
     }
     g.globalCompositeOperation = 'lighter';
     var nx = bm ? -bm.dy : 0, ny = bm ? bm.dx : 0;
