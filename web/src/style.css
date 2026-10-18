@@ -320,6 +320,12 @@ input[type="range"]::-moz-range-thumb{width:.75rem;height:.75rem;border:0;border
 .ag-m{font-size:var(--fs-label);letter-spacing:.34em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.4rem}
 
 /* ---------- chains ---------- */
+/* the chains are drawn on drafting paper: a fine grid every rem, a heavier line every five, in the ink at low alpha */
+#m-deps{--bp:rgba(236,232,228,.045);--bp2:rgba(236,232,228,.09);
+  background-image:linear-gradient(var(--bp2) 1px,transparent 1px),linear-gradient(90deg,var(--bp2) 1px,transparent 1px),linear-gradient(var(--bp) 1px,transparent 1px),linear-gradient(90deg,var(--bp) 1px,transparent 1px);
+  background-size:5rem 5rem,5rem 5rem,1rem 1rem,1rem 1rem;background-position:0 0,0 0,0 0,0 0;background-attachment:local;
+  -webkit-mask-image:radial-gradient(ellipse 85% 85% at 50% 40%,#000 55%,rgba(0,0,0,.25) 100%);mask-image:radial-gradient(ellipse 85% 85% at 50% 40%,#000 55%,rgba(0,0,0,.25) 100%)}
+#app[data-mode="pano"] #m-deps{padding:1.6rem 2rem}
 .deps-h{display:flex;align-items:baseline;gap:1rem}
 .deps-h .mod-t{margin-bottom:.6rem}
 .deps-h .hud-l{margin-left:auto}
