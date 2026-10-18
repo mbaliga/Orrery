@@ -173,7 +173,7 @@
     B.beamAt = Date.now();
     if (!bm) { B.beamImg = null; return; }
     c.width = Math.round(B.W * B.dpr); c.height = Math.round(B.H * B.dpr);
-    var x = c.getContext('2d'), L = Math.hypot(B.W, B.H) * 1.2, nx = -bm.dy, ny = bm.dx, cs = bm.col.join(',');
+    var x = c.getContext('2d'), L = Math.hypot(B.W, B.H) * 1.6, nx = -bm.dy, ny = bm.dx, cs = bm.col.join(',');
     x.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
     // light through foliage: not one shaft but several, of different widths and brightness, with gaps between, the
     // way sun comes through a tree. The pattern is seeded by the day, so it holds still and only turns with the sun.
@@ -232,7 +232,16 @@
     var g = B.g, W = B.W, H = B.H, bm = B.beam;
     g.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
     g.clearRect(0, 0, W, H);
-    if (B.beamImg) { g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(B.beamImg, 0, 0); g.setTransform(B.dpr, 0, 0, B.dpr, 0, 0); }
+    if (B.beamImg) {
+      // the light moves: the shafts sway slowly across their own width as leaves would, and may breathe —
+      // a slow swell and fade at a resting breath, about six to the minute
+      var t = now / 1000, sway = T.store.get('beamMove', true) && !reduce ? Math.sin(t * 0.11) * bm.w * 0.22 + Math.sin(t * 0.047 + 1.3) * bm.w * 0.12 : 0;
+      var breathe = T.store.get('beamBreathe', false) && !reduce ? 0.72 + 0.28 * (0.5 + 0.5 * Math.sin(t * 2 * Math.PI / 10)) : 1;
+      var nx0 = bm ? -bm.dy : 0, ny0 = bm ? bm.dx : 0;
+      g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = breathe;
+      g.translate(B.W * B.dpr / 2, B.H * B.dpr / 2); g.rotate(sway ? Math.sin(t * 0.03) * 0.012 : 0); g.translate(-B.W * B.dpr / 2 + nx0 * sway * B.dpr, -B.H * B.dpr / 2 + ny0 * sway * B.dpr);
+      g.drawImage(B.beamImg, 0, 0); g.restore(); g.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
+    }
     g.globalCompositeOperation = 'lighter';
     var nx = bm ? -bm.dy : 0, ny = bm ? bm.dx : 0;
     B.motes.forEach(function (m) {
