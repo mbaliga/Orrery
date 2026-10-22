@@ -1126,3 +1126,15 @@ html.bodying body{overflow:hidden}
 :root{--breath:1}
 .kcard[data-s="doing"] .kcard-t::before,.heat i[data-l="4"],.note-new::before{filter:brightness(calc(.7 + .3 * var(--breath)))}
 .kcard[data-s="doing"]{opacity:calc(.9 + .1 * var(--breath))}
+
+/* the day's measures: one widget a measure */
+.wgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(11rem,1fr));gap:1rem 1.6rem}
+.wg{display:flex;flex-direction:column;gap:.25rem;min-width:0}
+.wg-k{font-size:var(--fs-label);letter-spacing:.3em;text-transform:uppercase;color:var(--ink-3)}
+.wg-v{font-family:var(--sans);font-size:var(--fs-xl);font-weight:400;line-height:1.05;color:var(--ink);letter-spacing:-.01em}
+.wg-c{display:flex;gap:.18rem;margin:.2rem 0}
+.wg-d{width:.72rem;height:.72rem;display:block}
+.wg-d svg{display:block;width:100%;height:100%}
+.wg-d.now svg path{stroke:var(--ink-2);stroke-width:.8}
+.wg-s{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3);line-height:1.4}
+#app[data-mode="pano"] .wgs{grid-template-columns:repeat(2,minmax(0,1fr))}

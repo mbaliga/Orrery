@@ -105,6 +105,16 @@
     } },
     { id: 'body', name: 'Body', rows: function () {
       return [
+        { id: 'nupright', label: 'Sit upright, every', kind: 'range', min: 0, max: 90, step: 5, unit: ' min', get: function () { return T.nudges().upright; }, set: function (v) { T.setNudges({ upright: v }); },
+          about: 'A reminder to sit upright — chin back, shoulders down, feet flat — every so many minutes of sitting, as a toast and a tone. Zero turns it off. Sitting is counted while the page is in front of you and nothing has moved you; a session or a break logged in Body ends the stretch.' },
+        { id: 'nstand', label: 'Stand and walk, every', kind: 'range', min: 0, max: 120, step: 5, unit: ' min', get: function () { return T.nudges().stand; }, set: function (v) { T.setNudges({ stand: v }); },
+          about: 'The longer nudge: after this many minutes seated, stand and walk for five. Zero turns it off.' },
+        { id: 'neyes', label: 'Rest the eyes, every', kind: 'range', min: 0, max: 60, step: 5, unit: ' min', get: function () { return T.nudges().eyes; }, set: function (v) { T.setNudges({ eyes: v }); },
+          about: 'Twenty seconds on something twenty feet away. Off by default; twenty is the usual figure.' },
+        { id: 'nsys', label: 'System notifications', kind: 'toggle', get: function () { return !!T.nudges().system; }, set: function (v) { T.setNudges({ system: v }); },
+          about: function () { var p = ('Notification' in window) ? Notification.permission : 'unsupported'; return 'When the page is in another tab or window, a nudge may also come as a system notification, silent, through the browser — nothing leaves the device. The browser asks once. Right now: ' + p + '.'; } },
+        { id: 'widgets', label: 'Widgets', kind: 'text', placeholder: 'steps, energy_kcal, sitting_min, sleep_min', get: function () { return T.widgetList().join(', '); }, set: function (v) { T.setWidgets(v.split(/[\s,]+/).filter(Boolean)); },
+          about: 'Which measures the Day widgets show, in order: ' + Object.keys(T.METRICS).join(', ') + '. Each is fourteen days of cells and today’s number, with its source.' },
         { id: 'bopen', label: 'Open Body', kind: 'action', run: function () { close(); if (T.openBody) T.openBody(); },
           about: 'Sessions as their segments, the body map, sitting, and the breaks that answer it. B does the same.' },
         { id: 'bsore', label: 'Clear every sore region', kind: 'action', run: function () { Object.keys(T.body).forEach(function (k) { delete T.body[k]; }); T.store.set('body', T.body); T.emit('body'); T.toast('Cleared.'); },
@@ -168,6 +178,11 @@
       return [
         { id: 'visitor', label: 'What a visitor sees', kind: 'action', run: function () { close(); if (T.visitorView) T.visitorView(true); },
           about: 'The free view, for anyone who opens it without paying: your apps as one constellation, each joined to the others through the modules they share, and each opening its own page. It is read-only, needs no sign-in and counts nothing, so it shows no commits, tasks, notes or dates. An app appears once its repo is public or it is live; the rest stay out until you announce them.' },
+        { id: 'ximport', label: 'Import a day file', kind: 'file', accept: '.csv,.xml,.json,text/csv,application/json,text/xml', get: function () { return ''; }, set: function () {},
+          file: function (f) { T.importMetricsFile(f, function (n) { T.toast(n < 0 ? 'That file could not be read.' : n ? n + ' readings taken in.' : 'Nothing in that file looked like a day’s measures.'); paint(); }); },
+          about: function () { var s = T.metricSources(), ks = Object.keys(s); return 'Steps, energy burned, distance, active minutes, sleep, resting heart rate, floors — from the export of whatever already counts them: Google Fit’s Takeout (“Daily activity metrics.csv”), Apple Health (“export.xml”), Garmin, Samsung Health or Fitbit CSVs, or any CSV with a date column and columns named for the measures. Read here, kept on this device, one record a day with its source; a measured source outranks the page’s own sitting estimate. Live sources — Health Connect through Crocodyl, the watch — write the same records in the build.' + (ks.length ? ' So far: ' + ks.map(function (k) { return s[k] + ' from ' + k.replace('import:', ''); }).join(', ') + '.' : ''); } },
+        { id: 'xmetrics', label: 'Export the day measures', kind: 'action', run: function () { var blob = new Blob([T.exportMetrics()], { type: 'application/json' }), a = el('a', { href: URL.createObjectURL(blob), download: 'metrics.json' }); a.click(); }, about: 'Every day’s measures as one JSON file, by day and measure, each with its source.' },
+        { id: 'xmclear', label: 'Forget the day measures', kind: 'action', danger: true, run: function () { if (X.confirm === 'reset') { T.metricsClear(); X.confirm = null; T.toast('The day measures are gone from this device.'); } else X.confirm = 'reset'; }, about: 'Removes every imported and counted measure from this device. Press twice.' },
         { id: 'export', label: 'Export your notes', kind: 'action', run: exportNotes, about: 'Your notes as a JSON file, with their places, shelves, ties and the links the compiler made.' },
         { id: 'exportr', label: 'Export check-ins, sessions and the body map', kind: 'action', run: function () {
             var blob = new Blob([JSON.stringify({ checkins: T.checkins, sessions: T.sessions, body: T.body, routine: T.routine }, null, 2)], { type: 'application/json' }), a = el('a', { href: URL.createObjectURL(blob), download: 'rhythm.json' });
@@ -339,6 +354,7 @@
   }
   function readFile(file, r) {
     if (!file) return;
+    if (r.file) { r.file(file); return; }
     if (file.size > 300 * 1024) { T.toast('That file is over 300 KB. A smaller SVG or PNG keeps the page quick.'); return; }
     var fr = new FileReader();
     fr.onload = function () { r.set(String(fr.result)); paint(); T.toast('Your logo is in place.'); };
