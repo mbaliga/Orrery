@@ -183,6 +183,13 @@
           about: function () { var s = T.metricSources(), ks = Object.keys(s); return 'Steps, energy burned, distance, active minutes, sleep, resting heart rate, floors — from the export of whatever already counts them: Google Fit’s Takeout (“Daily activity metrics.csv”), Apple Health (“export.xml”), Garmin, Samsung Health or Fitbit CSVs, or any CSV with a date column and columns named for the measures. Read here, kept on this device, one record a day with its source; a measured source outranks the page’s own sitting estimate. Live sources — Health Connect through Crocodyl, the watch — write the same records in the build.' + (ks.length ? ' So far: ' + ks.map(function (k) { return s[k] + ' from ' + k.replace('import:', ''); }).join(', ') + '.' : ''); } },
         { id: 'xmetrics', label: 'Export the day measures', kind: 'action', run: function () { var blob = new Blob([T.exportMetrics()], { type: 'application/json' }), a = el('a', { href: URL.createObjectURL(blob), download: 'metrics.json' }); a.click(); }, about: 'Every day’s measures as one JSON file, by day and measure, each with its source.' },
         { id: 'xmclear', label: 'Forget the day measures', kind: 'action', danger: true, run: function () { if (X.confirm === 'reset') { T.metricsClear(); X.confirm = null; T.toast('The day measures are gone from this device.'); } else X.confirm = 'reset'; }, about: 'Removes every imported and counted measure from this device. Press twice.' },
+        { id: 'uimport', label: 'Import usage', kind: 'file', multiple: true, accept: '.jsonl,.json,application/json', get: function () { return ''; }, set: function () {},
+          file: function (f, all) { T.usageImport(all || [f], function (n) { T.toast(n ? n + ' sessions counted.' : 'Nothing in those files looked like a transcript or a Claude.ai export.'); paint(); }); },
+          about: 'Claude Code keeps every request in ~/.claude/projects/<project>/<session>.jsonl, with the tokens the API reported. Pick several at once (all of them for a week). Claude.ai’s data export (conversations.json) works too, estimated from length. They are read on this device; only totals are kept.' },
+        { id: 'umult', label: 'Model weights', kind: 'text', get: function () { return T.usageMultText(); }, set: function (v) { T.setUsageMult(v); },
+          about: 'How much one token of each model weighs against Sonnet, as a ratio of price. The defaults are a guess for the larger models; set what your plan seems to charge, for instance “opus 1.7, fable 5”.' },
+        { id: 'uexport', label: 'Export the usage ledger', kind: 'action', run: function () { var blob = new Blob([T.usageExport()], { type: 'application/json' }), a = el('a', { href: URL.createObjectURL(blob), download: 'usage.json' }); a.click(); }, about: 'Totals by session, as a JSON file. No prompts, no replies.' },
+        { id: 'uclear', label: 'Forget the usage ledger', kind: 'action', danger: true, run: function () { if (X.confirm === 'ureset') { T.usageClear(); X.confirm = null; T.toast('The usage ledger is gone from this device.'); } else X.confirm = 'ureset'; }, about: 'Press twice.' },
         { id: 'export', label: 'Export your notes', kind: 'action', run: exportNotes, about: 'Your notes as a JSON file, with their places, shelves, ties and the links the compiler made.' },
         { id: 'exportr', label: 'Export check-ins, sessions and the body map', kind: 'action', run: function () {
             var blob = new Blob([JSON.stringify({ checkins: T.checkins, sessions: T.sessions, body: T.body, routine: T.routine }, null, 2)], { type: 'application/json' }), a = el('a', { href: URL.createObjectURL(blob), download: 'rhythm.json' });
@@ -256,7 +263,7 @@
       return el('span', { class: 'x-v' }, inp);
     }
     if (r.kind === 'file') {
-      var f = el('input', { type: 'file', accept: r.accept, class: 'x-file', 'aria-label': r.label, on: { change: function (ev) { readFile(ev.target.files[0], r); } } });
+      var f = el('input', { type: 'file', accept: r.accept, multiple: !!r.multiple, class: 'x-file', 'aria-label': r.label, on: { change: function (ev) { r._all = Array.prototype.slice.call(ev.target.files); readFile(ev.target.files[0], r); } } });
       return el('span', { class: 'x-v x-filev' }, v ? el('img', { src: v, alt: '' }) : null, el('b', null, v ? 'Replace' : 'Choose'), f);
     }
     if (r.kind === 'connector') return el('span', { class: 'x-v x-status', 'data-live': r.live ? '1' : '0' }, el('b', null, typeof r.status === 'function' ? r.status() : r.status));
@@ -354,7 +361,7 @@
   }
   function readFile(file, r) {
     if (!file) return;
-    if (r.file) { r.file(file); return; }
+    if (r.file) { r.file(file, r._all); return; }
     if (file.size > 300 * 1024) { T.toast('That file is over 300 KB. A smaller SVG or PNG keeps the page quick.'); return; }
     var fr = new FileReader();
     fr.onload = function () { r.set(String(fr.result)); paint(); T.toast('Your logo is in place.'); };

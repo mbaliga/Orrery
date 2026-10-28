@@ -93,6 +93,11 @@
         <div class="wgs" id="widgets"></div>
         <p class="cap" id="widgetsNote"></p>
       </section>
+      <section class="mod usage-w v-crew v-today" id="m-usage" aria-label="Where the usage goes">
+        <h2 class="mod-t">Usage <span class="mod-s">where the model use goes, and where it leaks</span><span class="info-at" data-info="Read from Claude Code's own transcripts, on this device: each request is counted by the kind of token, the model, the project and the day, in weighted units (thousands of tokens at relative price). It ranks where the use went; it is not your quota, which is not published in tokens. Only totals are kept, never a prompt or a reply. Import under Settings → Data → Import usage." data-label="About the usage ledger"></span></h2>
+        <div class="us" id="usage"></div>
+        <p class="cap" id="usageNote"></p>
+      </section>
       <section class="mod signal v-crew" id="m-signal" aria-label="Signal">
         <h2 class="mod-t">Signal <span class="tag-s">simulated</span><span class="mod-s">MW75 Neuro, 12 channels, 500 Hz</span></h2>
         <canvas class="sig-c" id="sigCanvas" aria-label="EEG trace, three channels"></canvas>

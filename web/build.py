@@ -31,7 +31,7 @@ KIT_SRC = next((d for d in [os.path.join(HERE, "..", "..", "..", "..", "..", "..
 def read_kit(name):
     with open(os.path.join(KIT_SRC, name), encoding="utf-8") as f:
         return f.read()
-JS = ["graph.js", "seed.js", "core.js", "sfx.js", "rhythm.js", "board.js", "plan.js", "deps.js", "horizon.js", "pulse.js", "space.js", "ask.js", "sky.js", "look.js", "settings.js", "year.js", "runway.js", "dial.js", "body.js", "widgets.js", "compile.js", "targets.js", "releases.js", "audit.js", "resume.js", "app.js"]
+JS = ["graph.js", "seed.js", "core.js", "sfx.js", "rhythm.js", "board.js", "plan.js", "deps.js", "horizon.js", "pulse.js", "space.js", "ask.js", "sky.js", "look.js", "settings.js", "year.js", "runway.js", "dial.js", "body.js", "widgets.js", "usage.js", "compile.js", "targets.js", "releases.js", "audit.js", "resume.js", "app.js"]
 script = ("\n".join(read_kit(k) for k in KIT) + "\n" + "\n".join(read(j) for j in JS)).replace("</script", "<\\/script")
 # keep a vendored snapshot beside the sources so the build works without the sibling checkout
 vend = os.path.join(SRC, "vendor", "orrery-kit")

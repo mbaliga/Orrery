@@ -206,6 +206,7 @@
     T.initYear();
     if (T.initDial) T.initDial();
     if (T.initWidgets) T.initWidgets();
+    if (T.initUsage) T.initUsage();
     T.initBody();
     T.initSettings();
     // the explanations that wait behind an info mark
