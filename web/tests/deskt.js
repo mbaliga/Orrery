@@ -1,10 +1,11 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const path = require('path');
+process.chdir(__dirname + '/..'); require('fs').mkdirSync('shots', { recursive: true });
+const { chromium } = require('playwright'); const path = require('path');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => {
   const b = await chromium.launch();
   for (const [name, w, h] of [['pano', 3440, 1440], ['phone', 390, 844]]) {
     const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: 'dark', hasTouch: name === 'phone' }); const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(e.message));
-    await page.goto('file://' + path.join(__dirname, 'dist', 'test.html')); await page.waitForTimeout(900); await page.evaluate(() => { if (T.isLeanBack()) T.leanIn(true); }); await page.waitForTimeout(900);
+    await page.goto('file://' + path.join(__dirname, '..', 'dist', 'test.html')); await page.waitForTimeout(900); await page.evaluate(() => { if (T.isLeanBack()) T.leanIn(true); }); await page.waitForTimeout(900);
     await page.evaluate(() => { T.notes.slice(0, 3).forEach((n, i) => T.pinToDesk(n, 10 + i * 24, 20 + i * 12)); T.pinToDesk(T.addNote('A fourth, pinned from Ask', null, true)); });
     ok(await page.evaluate(() => !T.deskOpen()), name + ': the desk starts closed');
     const before = await page.evaluate(() => getComputedStyle(document.querySelector('#m-dial, #m-widgets, .wing')).opacity);

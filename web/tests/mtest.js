@@ -1,9 +1,10 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const path = require('path'), fs = require('fs');
+process.chdir(__dirname + '/..'); require('fs').mkdirSync('shots', { recursive: true });
+const { chromium } = require('playwright'); const path = require('path'), fs = require('fs');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => {
   const b = await chromium.launch(); const page = await (await b.newContext({ viewport: { width: 1920, height: 1080 }, colorScheme: 'dark' })).newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto('file://' + path.join(__dirname, 'dist', 'test.html')); await page.waitForTimeout(800);
+  await page.goto('file://' + path.join(__dirname, '..', 'dist', 'test.html')); await page.waitForTimeout(800);
   const L = []; for (let i = 0; i < 12; i++) { L.push(JSON.stringify({ type: 'user', sessionId: 'sx', timestamp: '2026-10-25T10:00:30Z', message: { content: [{ type: 'tool_result', tool_use_id: 't' + i, content: 'ok' }] } })); L.push(JSON.stringify({ type: 'assistant', sessionId: 'sx', cwd: '/home/claude/nooz', timestamp: '2026-10-25T10:0' + (i % 9) + ':00Z', requestId: 'r' + i, message: { model: 'claude-sonnet-5-5', stop_reason: 'tool_use', usage: { input_tokens: 5, output_tokens: 50, cache_read_input_tokens: 90000 }, content: [{ type: 'tool_use', id: 't' + i, name: 'Read', input: { file_path: '/x/nooz/main.kt' } }] } })); }
   await page.evaluate(t => new Promise(r => T.usageImport([new File([t], 'a.jsonl')], r)), L.join('\n'));
   await page.evaluate(() => { T.addNote('A [[Nooz]] thought tied to the reader app', null, true); T.pinToDesk(T.notes[T.notes.length - 1]); T.pinToDesk(T.notes[0]); T.notes[T.notes.length - 1].bd.tie = [T.notes[0].id]; T.saveNotes(); });

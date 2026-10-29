@@ -1,6 +1,6 @@
 // Run a list of steps at a size and take named screenshots. Usage: node steps.js <size> '<json steps>'
 // steps: ["key:,", "move:x,y", "click:x,y", "wait:ms", "eval:js", "shot:name", "shotclip:name:x,y,w,h", "hash:year"]
-const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const { chromium } = require('playwright');
 const path = require('path');
 const SIZES = { g9: [5120, 1440, 1], g9low: [3840, 1080, 1], mid: [3000, 1400, 1], mid2: [2400, 1300, 1], ipad: [1376, 1032, 2], ipadp: [1032, 1376, 2], pane: [834, 1000, 2], phone: [412, 915, 3], laptop: [1440, 900, 1], desk: [1920, 1080, 1] };
 (async () => {

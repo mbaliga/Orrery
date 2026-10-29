@@ -1,11 +1,12 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const path = require('path');
+process.chdir(__dirname + '/..'); require('fs').mkdirSync('shots', { recursive: true });
+const { chromium } = require('playwright'); const path = require('path');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, colorScheme: 'dark' }); const page = await ctx.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message)); const seen = [];
   await ctx.route('https://api.anthropic.com/**', r => { seen.push({ url: r.request().url(), h: r.request().headers(), body: r.request().postData() }); r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ model: 'claude-sonnet-5-5', content: [{ type: 'text', text: 'Mock answer [Task].' }], usage: { input_tokens: 400, output_tokens: 30 } }) }); });
   await ctx.route('http://localhost:11434/**', r => { seen.push({ url: r.request().url(), h: r.request().headers(), body: r.request().postData() }); r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ model: 'llama3.2', choices: [{ message: { content: 'Local answer.' } }], usage: { prompt_tokens: 300, completion_tokens: 20 } }) }); });
-  await page.goto('file://' + path.join(__dirname, 'dist', 'test.html')); await page.waitForTimeout(800);
+  await page.goto('file://' + path.join(__dirname, '..', 'dist', 'test.html')); await page.waitForTimeout(800);
   ok(await page.evaluate(() => T.llm.configured().length === 0), 'nothing attached at first');
   await page.evaluate(() => T.llm.setKey('claude', 'sk-ant-TESTKEY123')); await page.waitForTimeout(100);
   ok(await page.evaluate(() => T.llm.ready('claude') && T.llm.sessionOnly('claude')), 'without a passphrase the key is held for the session only');

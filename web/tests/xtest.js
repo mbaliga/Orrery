@@ -1,14 +1,15 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const path = require('path'), fs = require('fs');
+process.chdir(__dirname + '/..'); require('fs').mkdirSync('shots', { recursive: true });
+const { chromium } = require('playwright'); const path = require('path'), fs = require('fs');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, colorScheme: 'dark', acceptDownloads: true }); const page = await ctx.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.addInitScript(() => { window.__said = []; window.SpeechSynthesisUtterance = function (t) { this.text = t; }; Object.defineProperty(window, 'speechSynthesis', { value: { speak: u => window.__said.push(u.text), cancel() {} } }); });
-  await page.goto('file://' + path.join(__dirname, 'dist', 'test.html')); await page.waitForTimeout(800);
+  await page.goto('file://' + path.join(__dirname, '..', 'dist', 'test.html')); await page.waitForTimeout(800);
   // vault through the real Settings input
   await page.evaluate(() => T.openSettings && T.openSettings('data')); await page.waitForTimeout(300);
   const inp = await page.$('.x-file[aria-label="Open an Obsidian vault"]'); ok(!!inp && await inp.evaluate(e => e.hasAttribute('webkitdirectory')), 'the vault row picks a folder');
-  await inp.setInputFiles('shots/vault'); await page.waitForTimeout(500);
+  await inp.setInputFiles('tests/fixtures/vault'); await page.waitForTimeout(500);
   ok(await page.evaluate(() => T.vaultNotes().length) === 2, 'two notes read');
   const hits = await page.evaluate(() => T.search('quokka habitats', 3).map(h => h.kind + ':' + h.title)); ok(hits[0] && hits[0].startsWith('Vault'), 'a vault note is found with everything else: ' + hits);
   ok(await page.evaluate(() => T.vaultInfo().tasks) === 1, 'open checkboxes counted');
@@ -20,7 +21,7 @@ let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); i
   ok(/^None/.test(names) && /Fresh idea/.test(names), 'the notes leave as a valid zip of Markdown');
   // baseline
   const now = new Date().toISOString(); await page.evaluate(() => { const n = T.addNote('Written near a check-in', null, true); window.__bl = n.id; });
-  const cnt = await page.evaluate(t => T.baselineImport(t), fs.readFileSync('shots/bl.json', 'utf8').replace('__NOW__', now)); ok(cnt === 1, 'one valid check-in kept; out-of-range and malformed refused (' + cnt + ')');
+  const cnt = await page.evaluate(t => T.baselineImport(t), fs.readFileSync('tests/fixtures/bl.json', 'utf8').replace('__NOW__', now)); ok(cnt === 1, 'one valid check-in kept; out-of-range and malformed refused (' + cnt + ')');
   ok(await page.evaluate(() => { const n = T.notes.filter(x => x.id === window.__bl)[0]; return n.ctx && n.ctx.dev === 0.62; }), 'the note written nearest in time carries the deviation');
   const mood = await page.evaluate(() => T.indexDocs().filter(d => d.id === window.__bl)[0].mood); ok(mood === 0.62, 'it reaches the Map as the breath facet');
   // handoff

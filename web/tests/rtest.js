@@ -1,9 +1,10 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const path = require('path'), fs = require('fs');
+process.chdir(__dirname + '/..'); require('fs').mkdirSync('shots', { recursive: true });
+const { chromium } = require('playwright'); const path = require('path'), fs = require('fs');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => {
   const b = await chromium.launch(); const page = await (await b.newContext({ viewport: { width: 1920, height: 1080 }, colorScheme: 'dark' })).newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto('file://' + path.join(__dirname, 'dist', 'test.html')); await page.waitForTimeout(800);
+  await page.goto('file://' + path.join(__dirname, '..', 'dist', 'test.html')); await page.waitForTimeout(800);
   console.log(' index', await page.evaluate(() => JSON.stringify(T.indexKinds())));
   await page.evaluate(() => T.addNote('A single preferences file that every app of mine answers to, starting with the browser', null, true));
   const sim = await page.evaluate(() => T.similarNotes('a preferences file every app answers to, start with the browser', 2).map(h => [h.note && h.note.text.slice(0, 40), +h.score.toFixed(2), h.same]));

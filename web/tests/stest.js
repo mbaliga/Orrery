@@ -1,13 +1,14 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const path = require('path');
+process.chdir(__dirname + '/..'); require('fs').mkdirSync('shots', { recursive: true });
+const { chromium } = require('playwright'); const path = require('path');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => { const b = await chromium.launch(); const page = await (await b.newContext({ viewport: { width: 2400, height: 1200 }, colorScheme: 'dark' })).newPage(); const errs = []; page.on('pageerror', e => errs.push(e.message));
-  await page.goto('file://' + path.join(__dirname, 'dist', 'test.html')); await page.waitForTimeout(800);
+  await page.goto('file://' + path.join(__dirname, '..', 'dist', 'test.html')); await page.waitForTimeout(800);
   await page.evaluate(() => { T.notes.slice(0, 3).forEach((n, i) => T.pinToDesk(n, 10 + i * 30, 25)); T.desk(true); }); await page.waitForTimeout(700);
   let bs = await page.$$('.bn'); const a = await bs[0].boundingBox(), c = await bs[1].boundingBox();
-  await page.mouse.move(c.x + 40, c.y + 30); await page.mouse.down(); await page.mouse.move(a.x + 60, a.y + 40, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(300);
+  await page.mouse.move(c.x + c.width / 2, c.y + 14); await page.mouse.down(); await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(300);
   ok(await page.$$eval('.bn', e => e.length) === 2, 'dropping a note on another stacks it: two shown, one hidden under');
   ok(await page.$eval('.bn-s', e => e.textContent.trim()) === '+ 1', 'the stack says how many are under it');
   await page.click('.bn-s'); await page.waitForTimeout(200); ok(await page.$$eval('.bn.fanned', e => e.length) === 1, 'the + fans it out');
-  const f = await (await page.$('.bn.fanned')).boundingBox(); await page.mouse.move(f.x + 40, f.y + 30); await page.mouse.down(); await page.mouse.move(f.x + 40, f.y + 400, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(300);
+  const f = await (await page.$('.bn.fanned')).boundingBox(); await page.mouse.move(f.x + f.width / 2, f.y + 14); await page.mouse.down(); await page.mouse.move(f.x + f.width / 2, f.y + 400, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(300);
   ok(await page.$$eval('.bn-s', e => e.length) === 0 && await page.$$eval('.bn', e => e.length) === 3, 'dragging one out unstacks it');
   console.log(errs.length ? errs : 'no errors'); await b.close(); process.exit(fail ? 1 : 0); })();

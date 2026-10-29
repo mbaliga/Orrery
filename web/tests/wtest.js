@@ -1,4 +1,4 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const path = require('path'), fs = require('fs');
+const { chromium } = require('playwright'); const path = require('path'), fs = require('fs');
 (async () => {
   const b = await chromium.launch(); const page = await (await b.newContext({ viewport: { width: 1920, height: 1080 }, colorScheme: 'dark' })).newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
