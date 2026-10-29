@@ -54,7 +54,7 @@
             if (c && c.type === 'tool_use') { r.tools.push(c.name); s.uses[c.id] = { name: c.name, path: c.input && (c.input.file_path || c.input.path || c.input.notebook_path || '') }; }
           });
         } else if (d.type === 'user' && Array.isArray(m.content)) {
-          m.content.forEach(function (c) { if (c && c.type === 'tool_result') s.results[c.tool_use_id] = textLen(c.content); });
+          m.content.forEach(function (c) { if (c && c.type === 'tool_result') s.results[c.tool_use_id] = c.len != null ? c.len : textLen(c.content); });
         }
       });
     });

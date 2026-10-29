@@ -6,6 +6,7 @@
    On the desk: drag a note to move it; double-click empty space for a new one; double-click a note to rewrite it;
    Shift-drag from one note to another to tie them with a line (again to untie); the dot cycles its colour, always
    with the tag written beside it so no state is colour alone; × lets it off the desk (the note stays a note).
+   Drop a note on another to stack it; the + on the top one fans the stack out, and dragging one out unstacks it.
    The desk is an arrangement of the same notes, so they are indexed, linked and exported as before. */
 (function () {
   'use strict';
@@ -49,7 +50,12 @@
     d.addEventListener('pointerup', function (e) {
       if (!drag || drag.n !== n) return; var was = drag; drag = null; tieFrom = null;
       if (was.tie && was.moved) { var t = document.elementFromPoint(e.clientX, e.clientY), tn = t && t.closest && t.closest('.bn'); if (tn && tn.dataset.id !== n.id) { var other = tn.dataset.id; n.bd.tie = n.bd.tie || []; var i = n.bd.tie.indexOf(other); if (i >= 0) n.bd.tie.splice(i, 1); else n.bd.tie.push(other); save(); } ties(); return; }
-      if (was.moved) save();
+      if (was.moved) {
+        d.style.pointerEvents = 'none'; var under = document.elementFromPoint(e.clientX, e.clientY); d.style.pointerEvents = ''; var tb = under && under.closest && under.closest('.bn');
+        if (tb && tb.dataset.id !== n.id && !tb.classList.contains('fanned')) { var base = pinned().filter(function (m) { return m.id === tb.dataset.id; })[0]; if (base && base.bd.on !== n.id) { var mine = pinned().filter(function (m) { return m.bd.on === n.id; }); n.bd.on = base.id; mine.forEach(function (m) { m.bd.on = base.id; }); n.bd.x = base.bd.x; n.bd.y = base.bd.y; save(); paint(); T.toast('Stacked under that note. The + shows how many; it fans them out.'); return; } }
+        else if (n.bd.on) { delete n.bd.on; }
+        save(); paint();
+      }
     });
     d.addEventListener('dblclick', function (e) { e.stopPropagation(); edit(n, txt); });
     d.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target === d) { e.preventDefault(); edit(n, txt); } else if ((e.key === 'Delete' || e.key === 'Backspace') && e.target === d) { delete n.bd; save(); paint(); } });
@@ -68,7 +74,15 @@
   }
   function paint() {
     if (!host) return; Array.prototype.slice.call(host.querySelectorAll('.bn')).forEach(function (n) { n.remove(); });
-    var ns = pinned(); ns.forEach(function (n) { host.appendChild(mk(n)); });
+    var ns = pinned(), ids = {}; ns.forEach(function (n) { ids[n.id] = n; });
+    var kids = {}; ns.forEach(function (n) { if (n.bd.on && ids[n.bd.on] && n.bd.on !== n.id) (kids[n.bd.on] = kids[n.bd.on] || []).push(n); else if (n.bd.on) delete n.bd.on; });
+    ns.forEach(function (n) {
+      if (n.bd.on && ids[n.bd.on]) return;
+      var d0 = mk(n), ks = kids[n.id] || [];
+      if (ks.length) { d0.classList.add('stacked'); d0.appendChild(el('button', { type: 'button', class: 'bn-s', 'aria-label': (n.bd.fan ? 'Fold' : 'Fan out') + ' the ' + ks.length + ' notes under this one', title: n.bd.fan ? 'Fold the stack' : 'Fan out the stack', on: { pointerdown: function (e) { e.stopPropagation(); }, click: function (e) { e.stopPropagation(); n.bd.fan = !n.bd.fan; save(); paint(); } } }, (n.bd.fan ? '− ' : '+ ') + ks.length)); }
+      host.appendChild(d0);
+      if (ks.length && n.bd.fan) ks.forEach(function (k, i) { var dk = mk(k); dk.style.left = n.bd.x + '%'; dk.style.top = n.bd.y + '%'; dk.style.marginTop = ((i + 1) * 3.9) + 'rem'; dk.classList.add('fanned'); host.appendChild(dk); });
+    });
     var hint = host.querySelector('.bd-hint'); hint.hidden = ns.length > 0; hint.textContent = ns.length ? '' : (board() === 'all' ? 'Nothing pinned here yet. Double-click for a note; any note can be sent here from its tools.' : 'Nothing pinned to this project yet. Double-click for a note.');
     var lab = host.querySelector('.bd-lab'); lab.textContent = board() === 'all' ? 'Desk' : 'Desk · ' + T.projectName(board());
     ties();
