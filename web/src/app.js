@@ -207,6 +207,10 @@
     if (T.initDial) T.initDial();
     if (T.initWidgets) T.initWidgets();
     if (T.initUsage) T.initUsage();
+    if (T.initRecall) T.initRecall();
+    if (T.initDesk) T.initDesk();
+    if (T.initMap) T.initMap();
+    if (T.initBridge) T.initBridge();
     T.initBody();
     T.initSettings();
     // the explanations that wait behind an info mark
@@ -251,12 +255,13 @@
       } catch (e) { T.toast('Full screen is not available here.'); }
     });
     document.addEventListener('keydown', function (ev) {
+      if (ev.target && ev.target.isContentEditable) return;
       var tag = (ev.target.tagName || '').toLowerCase();
       // ask, from anywhere
       if (T.settingsOpen()) return;
       if ((ev.metaKey || ev.ctrlKey) && !ev.altKey && (ev.key === 'k' || ev.key === 'K')) { if (T.isVisitor()) return; ev.preventDefault(); if (T.askOpen()) T.closeAsk(); else T.openAsk(''); return; }
       if (T.bodyOpen && T.bodyOpen()) { if (ev.key === 'Escape' || ev.key === 'b' || ev.key === 'B') { ev.preventDefault(); T.closeBody(); } return; }
-      if (T.askOpen() || T.yearOpen()) return;
+      if (T.askOpen() || T.yearOpen() || (T.mapOpen && T.mapOpen())) return;
       // leaning back: start typing to ask; Escape or Enter leans in
       if (T.isLeanBack()) {
         if (T.leanBackAuto()) { T.leanIn(true); return; }

@@ -308,6 +308,37 @@
     }, function () { paintAnswer({ text: 'The on-device model could not answer just now.', rows: [noteRow(q, false)] }); });
   }
 
+  // ---------------------------------------------------------------- a model you attached (Settings → Data → Models)
+  var SYSTEM = 'You answer questions about one person\'s own work, plainly, in at most four short sentences, using only the facts given. Name where a fact came from in brackets, for instance [Task] or [Note]. If the facts do not say, say so. Never invent a date, a name or a number.';
+  function factsFor(q) {
+    var res = results(q), lines = [];
+    (res.rows || []).filter(function (r) { return r.k !== 'Ask' && r.k !== 'Command'; }).slice(0, 8).forEach(function (r) { lines.push('- [' + r.k + '] ' + r.title + (r.sub ? ' — ' + r.sub : '')); });
+    if (T.search) T.search(q, 6).forEach(function (h) { var l = '- [' + h.kind + '] ' + h.text.slice(0, 220); if (lines.indexOf(l) < 0) lines.push(l); });
+    return lines.join('\n') + '\n\nThe state of the workspace:\n' + brief();
+  }
+  function modelName(id) { return T.llm.list().filter(function (p) { return p.id === id; })[0]; }
+  function askLLM(id, q) {
+    if (!q || !T.llm.ready(id)) return;
+    var p = modelName(id), user = 'Question: ' + q + '\n\nFacts from the person\'s own workspace:\n' + factsFor(q), pv = T.llm.preview(id, SYSTEM, user);
+    function send() {
+      paintAnswer({ text: (p.watched ? 'Asking ' + p.name + '…' : 'Thinking, on your own server…'), thinking: true });
+      T.llm.chat(id, SYSTEM, user).then(function (r) {
+        var u = r.usage; paintAnswer({ text: r.text || 'It answered with nothing.', rows: [noteRow(q, false)], from: p.name + ' (' + (r.model || T.llm.cfg(id).model) + ')' + (p.watched ? ', a watched object' : ', your own server') + ' — sent ' + T.int(pv.chars) + ' characters, ' + T.int(u.in + u.cr) + ' tokens in, ' + T.int(u.out) + ' out; counted in Usage' });
+      }, function (e) { paintAnswer({ text: e.message, rows: [noteRow(q, false)] }); });
+    }
+    if (!p.watched || !T.llm.confirm()) { send(); return; }
+    T.clear(ans); ans.hidden = false;
+    ans.appendChild(el('p', { class: 'ask-a' }, 'This leaves the device, to ' + p.name + ' — a watched object. Exactly this is sent, and no key appears in it.'));
+    ans.appendChild(el('pre', { class: 'ask-pv' }, pv.text));
+    ans.appendChild(el('div', { class: 'ask-ch' }, el('button', { class: 'chip', type: 'button', on: { click: send } }, 'Send to ' + p.name), el('button', { class: 'chip', type: 'button', on: { click: function () { update(); } } }, 'Keep it here')));
+  }
+  function modelChips(q) {
+    var ids = T.llm.configured(); if (!ids.length) return null;
+    var w = el('div', { class: 'ask-ch' });
+    ids.forEach(function (id) { var p = modelName(id); w.appendChild(el('button', { class: 'chip', type: 'button', title: p.watched ? 'A watched object: you will see what is sent first' : 'Your own server', on: { click: function () { askLLM(id, input.value.trim()); } } }, 'Ask ' + p.name + (p.watched ? ' ↗' : ''))); });
+    return w;
+  }
+
   // ---------------------------------------------------------------- results
   function results(raw) {
     var q = raw.trim(), lq = norm(q), rows = [], m;
@@ -335,6 +366,12 @@
     var seen = {};
     rows.forEach(function (r) { seen[r.k + '|' + r.title] = 1; });
     pool.forEach(function (x) { var key = x.r.k + '|' + x.r.title; if (!seen[key] && rows.length < 9) { seen[key] = 1; rows.push(x.r); } });
+    if (/^(?:desk|the desk|board|hide windows|clear (?:the )?(?:windows|screen)|show (?:the )?(?:desk|board|notes))$/i.test(q)) rows.push({ k: 'Command', title: T.deskOpen() ? 'Bring the windows back' : 'Hide the windows, show the desk', sub: 'H', strong: true, run: function () { T.desk(); } });
+    var pm = q.match(/^(?:pin|pin to desk|pin to board)\s*[:,\-]?\s+([\s\S]+)/i); if (pm) rows.push({ k: 'Note', title: pm[1].trim(), sub: 'Keep as a note, pinned to the desk', strong: true, run: function () { var tt = T.toast; T.toast = function () {}; var n = T.addNote(pm[1].trim(), null, true); T.toast = tt; T.pinToDesk(n); T.toast('Pinned. Press H to see the desk.'); } });
+    var hm = q.match(/^(?:hand ?off|send to fonebrew|to fonebrew|fonebrew)\s*[:,\-]?\s+(.+)/i); if (hm && T.search) T.search(hm[1], 4, ['Task']).forEach(function (h) { rows.push({ k: 'Hand off', title: h.title, sub: 'Save the task with its notes and files for Fonebrew, and copy the prompt', strong: true, run: function () { T.handoffSave(h.id); } }); });
+    // an idea you have had before, and anything else the index knows
+    if (T.similarNotes && q.length >= 12 && !/^(?:note|idea|remember|jot|thought|task|todo|move|mark|set|put|lens|only|focus)\b/i.test(q)) T.similarNotes(q.replace(/^\+\s*/, ''), 2).forEach(function (h) { rows.push({ k: 'Before', title: (h.note ? h.note.text : h.text).slice(0, 110), sub: (h.same ? 'You wrote this' : 'Close to this') + (h.at ? ', ' + h.at : '') + (h.note ? ' — add it as a line there' : ''), strong: h.same, run: h.note ? function () { T.foldNote(h.id, q.replace(/^\+\s*/, '')); } : function () { T.toast(h.text); } }); });
+    if (T.search && q.length >= 3) T.search(q, 8).filter(function (h) { return ['Session', 'File', 'Vault', 'Commit', 'Note'].indexOf(h.kind) >= 0; }).slice(0, 4).forEach(function (h) { var key = h.kind + '|' + h.text.slice(0, 40); if (!seen[key] && rows.length < 9) { seen[key] = 1; rows.push({ k: h.kind, title: (h.title || h.text).slice(0, 100), sub: (h.at || '') + (h.kind === 'Commit' || h.kind === 'Session' || h.kind === 'File' ? '' : ''), run: function () { T.toast(h.text.slice(0, 280)); } }); } });
     // anything at all can be kept
     if (!rows.some(function (r) { return r.k === 'Note' && r.strong; }) && !(a && a.text && !a.none) && q.length > 2) rows.push(noteRow(q, false));
     return { rows: rows, answer: a };
@@ -352,12 +389,16 @@
     if (!a) return;
     if (a.none) {
       ans.appendChild(el('p', { class: 'ask-a' }, 'I can’t answer that from what this page knows.'));
+      var mc = modelChips(input.value.trim());
       if (A.model === 'ready') ans.appendChild(el('button', { class: 'chip', on: { click: function () { askModel(input.value.trim()); } } }, 'Ask the on-device model'));
-      else ans.appendChild(el('p', { class: 'ask-s' }, 'In the build, a question like this goes to your on-device model: ASOM when it is running, or the browser’s own. Nothing leaves the device.'));
+      if (mc) ans.appendChild(mc);
+      if (!mc && A.model !== 'ready') ans.appendChild(el('p', { class: 'ask-s' }, 'Attach a model — Llama on your own server, or Claude, ChatGPT, DeepSeek or Grok with your own key — under Settings → Models, and a question like this goes to it, from your own notes and tasks.'));
       return;
     }
     ans.appendChild(el('p', { class: 'ask-a' + (a.thinking ? ' wait' : '') + (Array.isArray(a.text) ? ' lines' : '') }, Array.isArray(a.text) ? a.text.join('\n') : a.text));
+    if (!a.thinking && T.voice) T.voice.speak(Array.isArray(a.text) ? a.text.join(' ') : a.text);
     if (a.from) ans.appendChild(el('p', { class: 'ask-s' }, a.from));
+    else if (!a.thinking) { var mc2 = modelChips(input.value.trim()); if (mc2 && input.value.trim().length > 3) ans.appendChild(mc2); }
   }
   function paintRows(rows, answerRows) {
     T.clear(list);
@@ -457,6 +498,8 @@
         var d = ev.key === 'ArrowDown' ? 1 : -1, n = A.rows.length, i = A.sel;
         for (var k = 0; k < n; k++) { i = (i + d + n) % n; if (A.rows[i].run) break; }
         A.sel = i; mark();
+      } else if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey) && T.llm && T.llm.def()) {
+        ev.preventDefault(); askLLM(T.llm.def(), input.value.trim());
       } else if (ev.key === 'Enter') {
         ev.preventDefault();
         var a = results(input.value).answer;

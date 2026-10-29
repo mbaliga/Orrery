@@ -451,6 +451,7 @@
     var lk = T.noteLinks ? T.noteLinks(n) : [];
     if (lk.length) box.appendChild(el('p', { class: 'nt-l' }, 'Linked: ' + T.list(lk.map(function (l) { return l.band === 'h' ? 'written ' + l.name : l.name; }), 5) + (n.ctx && n.ctx.energy ? '; you were ' + T.energyWord(n.ctx.energy) : '')));
     act(n.pin ? 'Unpin' : 'Pin', function () { n.pin = !n.pin; T.saveNotes(); });
+    act(n.bd ? 'Off the desk' : 'To the desk', function () { if (n.bd) { delete n.bd; T.saveNotes(); } else { T.pinToDesk(n); T.toast('Pinned. Press H to clear the windows and see the desk.'); } });
     act('Edit', function () { openForm(n, host.left + r.x0 + 4, host.top + (r.y0 + r.y1) / 2, null); });
     act('Closer', function () { T.noteDepth(n, 0.72); }, null, T.canopyDepth && !T.canopyDepth() ? 'Up a shelf: larger and brighter' : 'Pull it toward you');
     act('Further', function () { T.noteDepth(n, 1.38); }, null, T.canopyDepth && !T.canopyDepth() ? 'Down a shelf: smaller and quieter' : 'Push it away');

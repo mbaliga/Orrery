@@ -1,0 +1,13 @@
+const B = require('../src/bridge.js'), { execSync } = require('child_process'), fs = require('fs'); let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
+const md = '---\ntitle: Prefs file\ntags: [protocol, apps]\n---\n# Heading\nOne file every app answers to. See [[Fylz]] and [[Browser|the browser]] #idea\n- [ ] Draft the schema 📅 2026-11-02\n- [x] Pick a name\n';
+const p = B.parseMd(md, 'Notes/prefs.md');
+ok(p.title === 'Prefs file' && p.links.join() === 'Fylz,Browser' && p.tags.includes('idea') && p.tags.includes('protocol'), 'front matter, wikilinks (with aliases) and tags read: ' + JSON.stringify([p.title, p.links, p.tags]));
+ok(p.tasks.length === 2 && p.tasks[0].due === '2026-11-02' && !p.tasks[0].done && p.tasks[1].done, 'checkboxes and their due dates read');
+ok(B.parseMd('# Only a heading\ntext', 'a/b.md').title === 'Only a heading' && B.parseMd('plain', 'a/Plain note.md').title === 'Plain note', 'title falls back to the heading, then the file name');
+ok(B.canvasText(JSON.stringify({ nodes: [{ type: 'text', text: 'idea one' }, { type: 'file', file: 'x.md' }] }), 'c/Board.canvas').body === 'idea one', 'a canvas gives its text cards');
+const md2 = B.noteToMd({ id: 'n-1', text: 'A thought "quoted"', tag: 'idea', at: '2026-10-29', lines: [{ at: '2026-10-30', text: 'again' }], bd: { x: 10.123, y: 20 } }, () => ['Fonebrew']);
+ok(/^---\ntitle: "A thought 'quoted'"/.test(md2) && /desk: \{ x: 10.1, y: 20.0 \}/.test(md2) && /\[\[Fonebrew\]\]/.test(md2) && /- 2026-10-30: again/.test(md2), 'a note leaves as Markdown a vault reads');
+const z = B.zip([{ name: 'Orrery/a b.md', text: 'héllo' }, { name: 'Orrery/c.md', text: 'x'.repeat(5000) }]); fs.writeFileSync('/tmp/bt.zip', z);
+const t = execSync("python3 -c \"import zipfile;z=zipfile.ZipFile('/tmp/bt.zip');print(z.testzip());print(z.namelist());print(z.read('Orrery/a b.md').decode())\"").toString(); console.log(t.trim().split('\n').map(x => ' ' + x).join('\n'));
+ok(/^None/.test(t) && /héllo/.test(t) && /Orrery\/c.md/.test(t), 'the zip is valid, checksums pass, UTF-8 names and text intact');
+process.exit(fail ? 1 : 0);

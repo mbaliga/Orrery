@@ -1,0 +1,1 @@
+[{"schema":"checkin/1","at":"__NOW__","deviation":0.62,"src":"baseline"},{"schema":"checkin/1","at":"2020-01-01T00:00:00Z","deviation":2},{"at":"bad","deviation":0.1}]

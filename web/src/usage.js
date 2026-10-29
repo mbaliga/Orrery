@@ -11,10 +11,10 @@
 (function (root) {
   'use strict';
   var KIND_W = { fresh: 1, cw5: 1.25, cw1: 2, cr: 0.1, out: 5 };
-  var DEFAULT_MULT = { haiku: 0.33, sonnet: 1, opus: 1.67, fable: 5, mythos: 5, other: 1 };
+  var DEFAULT_MULT = { haiku: 0.33, sonnet: 1, opus: 1.67, fable: 5, mythos: 5, gpt: 1, deepseek: 0.1, grok: 1, llama: 0, other: 1 };
   var MECH = { Read: 1, Edit: 1, Write: 1, Bash: 1, Grep: 1, Glob: 1, MultiEdit: 1, NotebookEdit: 1, TaskCreate: 1, TaskUpdate: 1, TaskList: 1, TaskGet: 1, TodoWrite: 1 };
 
-  function tier(model) { model = String(model || '').toLowerCase(); return /haiku/.test(model) ? 'haiku' : /sonnet/.test(model) ? 'sonnet' : /opus/.test(model) ? 'opus' : /fable/.test(model) ? 'fable' : /mythos/.test(model) ? 'mythos' : 'other'; }
+  function tier(model) { model = String(model || '').toLowerCase(); return /haiku/.test(model) ? 'haiku' : /sonnet/.test(model) ? 'sonnet' : /opus/.test(model) ? 'opus' : /fable/.test(model) ? 'fable' : /mythos/.test(model) ? 'mythos' : /gpt|^o\d|chatgpt/.test(model) ? 'gpt' : /deepseek/.test(model) ? 'deepseek' : /grok/.test(model) ? 'grok' : /llama/.test(model) ? 'llama' : 'other'; }
   function mult(model, mults) { var t = tier(model), m = mults || DEFAULT_MULT; return m[t] != null ? m[t] : 1; }
   function dayOf(ts) { var d = new Date(ts); if (isNaN(d)) return null; return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function base(p) { p = String(p || ''); var s = p.replace(/\/+$/, '').split('/'); return s[s.length - 1] || p || '(unknown)'; }
@@ -172,7 +172,15 @@
 
   // -------------------------------------------------------------------------------- the page
   var T = root.T, el = T.el;
-  var SESS = T.store.get('usage', {}), MULT = T.store.get('usageMult', {});
+  var SESS = T.store.get('usage', {}), MULT = T.store.get('usageMult', {}), ASKS = T.store.get('usageAsks', []);
+  // the page's own calls to a model, counted like any other request
+  T.usageNote = function (o) { ASKS.push({ t: new Date().toISOString(), model: o.model || o.provider, u: o.usage }); if (ASKS.length > 2000) ASKS = ASKS.slice(-2000); T.store.set('usageAsks', ASKS); T.emit('usage'); };
+  function askSessions() {
+    var by = {}; ASKS.forEach(function (a) { var d = dayOf(a.t); (by[d] = by[d] || []).push(a); });
+    var lines = []; Object.keys(by).forEach(function (d) { by[d].forEach(function (a, i) { lines.push(JSON.stringify({ type: 'assistant', sessionId: 'orrery-ask-' + d, cwd: 'Orrery (Ask)', timestamp: a.t, requestId: d + i, message: { model: a.model, stop_reason: 'end_turn', usage: { input_tokens: a.u.in || 0, output_tokens: a.u.out || 0, cache_read_input_tokens: a.u.cr || 0, cache_creation_input_tokens: a.u.cw || 0 } } })); }); });
+    return lines.length ? analyse([lines.join('\n')], { mults: mults() }) : {};
+  }
+  function ALL() { return Object.assign({}, SESS, askSessions()); }
   function mults() { var m = {}; for (var k in DEFAULT_MULT) m[k] = MULT[k] != null ? MULT[k] : DEFAULT_MULT[k]; return m; }
   function save() { try { T.store.set('usage', SESS); } catch (e) { T.toast('The usage record is too large to keep on this device; forget the oldest and import again.'); } T.emit('usage'); }
   T.usageAPI = API;
@@ -181,7 +189,7 @@
     var m = {}; String(text || '').split(/[,;\n]+/).forEach(function (p) { var q = p.trim().match(/^([a-z]+)\s*[=:]?\s*([\d.]+)$/i); if (q) m[q[1].toLowerCase()] = +q[2]; });
     MULT = m; T.store.set('usageMult', MULT); T.emit('usage');
   };
-  T.usageMultText = function () { var m = mults(); return ['haiku', 'sonnet', 'opus', 'fable'].map(function (k) { return k + ' ' + m[k]; }).join(', '); };
+  T.usageMultText = function () { var m = mults(); return ['haiku', 'sonnet', 'opus', 'fable', 'gpt', 'deepseek', 'grok', 'llama'].map(function (k) { return k + ' ' + m[k]; }).join(', '); };
   T.usageImport = function (files, done) {
     var list = Array.prototype.slice.call(files), texts = [], chats = [], left = list.length;
     if (!left) { done(0); return; }
@@ -202,12 +210,13 @@
       if (n) save(); done(n);
     }
   };
-  T.usageClear = function () { SESS = {}; T.store.set('usage', SESS); T.emit('usage'); };
+  T.usageSessionList = function () { return Object.keys(SESS).map(function (k) { return SESS[k]; }); };
+  T.usageClear = function () { SESS = {}; ASKS = []; T.store.set('usage', SESS); T.store.set('usageAsks', ASKS); T.emit('usage'); };
   T.usageExport = function () {
-    var r = report(SESS, { mults: mults() });
-    return JSON.stringify({ schema: 'usage/1', at: new Date().toISOString(), note: 'weighted units, not quota; totals only', mults: mults(), report: r, sessions: SESS }, null, 1);
+    var all = ALL(), r = report(all, { mults: mults() });
+    return JSON.stringify({ schema: 'usage/1', at: new Date().toISOString(), note: 'weighted units, not quota; totals only', mults: mults(), report: r, sessions: all }, null, 1);
   };
-  T.usageReport = function () { return report(SESS, { mults: mults() }); };
+  T.usageReport = function () { return report(ALL(), { mults: mults() }); };
 
   function u(x) { return x >= 1000 ? (x / 1000).toFixed(x >= 10000 ? 0 : 1) + 'M' : Math.round(x) + 'k'; }
   function pct(x, tot) { return tot ? Math.round(x / tot * 100) + '%' : '0%'; }
@@ -226,7 +235,7 @@
 
   T.renderUsage = function () {
     var host = T.$('#usage'); if (!host) return; T.clear(host);
-    var R = report(SESS, { mults: mults() }), note = T.$('#usageNote');
+    var R = report(ALL(), { mults: mults() }), note = T.$('#usageNote');
     if (!R.sessions) { note.textContent = 'Nothing counted yet. Settings → Data → Import usage takes Claude Code transcripts (the .jsonl files in ~/.claude/projects, several at once) or Claude.ai’s conversations.json. They are read here and only totals are kept.'; return; }
     note.textContent = 'Weighted units (thousands of tokens at relative price), ' + R.from + ' to ' + R.to + ', ' + T.plural(R.sessions, 'session') + (R.est ? '; ' + pct(R.est, R.units) + ' of it estimated from length' : '') + '. Not a reading of your quota.';
     var head = el('div', { class: 'wg' }); head.appendChild(el('span', { class: 'wg-k' }, 'Used')); head.appendChild(el('b', { class: 'wg-v' }, u(R.units))); head.appendChild(el('span', { class: 'wg-s' }, T.int(R.turns) + ' requests')); host.appendChild(head);

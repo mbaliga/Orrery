@@ -1,0 +1,42 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright'); const path = require('path');
+let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
+(async () => {
+  const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, colorScheme: 'dark' }); const page = await ctx.newPage();
+  const errors = []; page.on('pageerror', e => errors.push(e.message)); const seen = [];
+  await ctx.route('https://api.anthropic.com/**', r => { seen.push({ url: r.request().url(), h: r.request().headers(), body: r.request().postData() }); r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ model: 'claude-sonnet-5-5', content: [{ type: 'text', text: 'Mock answer [Task].' }], usage: { input_tokens: 400, output_tokens: 30 } }) }); });
+  await ctx.route('http://localhost:11434/**', r => { seen.push({ url: r.request().url(), h: r.request().headers(), body: r.request().postData() }); r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ model: 'llama3.2', choices: [{ message: { content: 'Local answer.' } }], usage: { prompt_tokens: 300, completion_tokens: 20 } }) }); });
+  await page.goto('file://' + path.join(__dirname, 'dist', 'test.html')); await page.waitForTimeout(800);
+  ok(await page.evaluate(() => T.llm.configured().length === 0), 'nothing attached at first');
+  await page.evaluate(() => T.llm.setKey('claude', 'sk-ant-TESTKEY123')); await page.waitForTimeout(100);
+  ok(await page.evaluate(() => T.llm.ready('claude') && T.llm.sessionOnly('claude')), 'without a passphrase the key is held for the session only');
+  ok(await page.evaluate(() => !JSON.stringify(localStorage).includes('TESTKEY123')), 'the key is not in storage');
+  ok(await page.evaluate(() => T.llm.unlock('short')) === false, 'a passphrase under six characters is refused');
+  await page.evaluate(() => T.llm.unlock('a long passphrase')); await page.evaluate(() => T.llm.setKey('claude', 'sk-ant-TESTKEY123')); await page.waitForTimeout(200);
+  ok(await page.evaluate(() => !JSON.stringify(localStorage).includes('TESTKEY123') && !!JSON.parse(localStorage.getItem(Object.keys(localStorage).filter(k => /keyvault/.test(k))[0])).keys.claude), 'with a passphrase the key is kept as ciphertext only');
+  await page.evaluate(() => T.llm.setBase('llama', 'http://localhost:11434/v1')); await page.evaluate(() => T.llm.setModel('llama', 'llama3.2'));
+  ok(await page.evaluate(() => T.llm.configured().join()) === 'llama,claude', 'configured: local first, then hosted');
+  // ask
+  await page.keyboard.press('Control+k'); await page.waitForTimeout(300);
+  await page.fill('#askIn', 'zxq blorp frobnicate quux?'); await page.waitForTimeout(300);
+  const chips = await page.$$eval('#askAns .chip', e => e.map(x => x.textContent)); console.log(' chips', chips);
+  ok(chips.some(t => /Ask Claude/.test(t)) && chips.some(t => /Ask Llama/.test(t)), 'chips for each attached model, hosted ones marked');
+  await page.click('#askAns .chip:has-text("Ask Claude")'); await page.waitForTimeout(300);
+  const pv = await page.textContent('#askAns'); ok(/watched object/.test(pv) && /api\.anthropic\.com/.test(pv) && !/TESTKEY/.test(pv) && /Facts from the person/.test(pv), 'preview sheet names the watched object, shows the words and facts, hides the key');
+  ok(seen.length === 0, 'nothing sent before pressing Send');
+  await page.click('#askAns .chip:has-text("Send to Claude")'); await page.waitForTimeout(600);
+  ok(seen.length === 1 && seen[0].h['x-api-key'] === 'sk-ant-TESTKEY123' && /anthropic-dangerous/.test(JSON.stringify(seen[0].h)), 'one request, with the key in the header');
+  ok(/Mock answer/.test(await page.textContent('#askAns')) && /watched object/.test(await page.textContent('#askAns')), 'answer shown with its source');
+  await page.fill('#askIn', 'zxq blorp frobnicate quux again?'); await page.waitForTimeout(300);
+  await page.click('#askAns .chip:has-text("Ask Llama")'); await page.waitForTimeout(600);
+  ok(seen.length === 2 && !seen[1].h.authorization && /Local answer/.test(await page.textContent('#askAns')), 'local Llama answers with no sheet and no key');
+  const rep = await page.evaluate(() => { const r = T.usageReport(); return { u: r.units, p: Object.keys(r.projects), m: Object.keys(r.models) }; }); console.log(' ledger', JSON.stringify(rep));
+  ok(rep.u > 0 && rep.p.includes('Orrery (Ask)'), 'both calls are counted in the usage ledger');
+  await page.screenshot({ path: 'shots/ask-byok.png' });
+  // reload: locked, ciphertext survives
+  await page.reload(); await page.waitForTimeout(800);
+  ok(await page.evaluate(() => T.llm.locked() && !T.llm.ready('claude')), 'after a reload the keys are locked until the passphrase is typed');
+  await page.evaluate(() => T.llm.unlock('a long passphrase')); await page.waitForTimeout(300);
+  ok(await page.evaluate(() => T.llm.ready('claude')), 'the passphrase opens them again');
+  ok(await page.evaluate(() => T.llm.unlock('wrong passphrase')) === false, 'a wrong passphrase is refused');
+  console.log(errors.length ? errors : 'no errors'); await b.close(); process.exit(fail ? 1 : 0);
+})();

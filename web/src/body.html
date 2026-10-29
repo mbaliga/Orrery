@@ -8,6 +8,9 @@
     <canvas id="cvNear" aria-label="Notes. Drag to move, scroll on a note to change its shelf, drop it on a project to tie it there, double-click empty space for a new note."></canvas>
   </div>
 
+  <!-- the desk: pinned notes, forward when the windows are cleared -->
+  <div class="board" id="board" aria-label="Desk: pinned notes"><svg class="bd-svg" aria-hidden="true"></svg><span class="bd-lab"></span><p class="bd-hint cap"></p></div>
+
   <!-- on the glass: the strip along the top of the canopy -->
   <header class="hud-top" id="top">
     <div class="brand">
@@ -21,6 +24,8 @@
     </div>
     <nav class="tabs" id="tabs" aria-label="Views"></nav>
     <div class="top-r">
+      <button class="hud-l" id="mapBtn" aria-pressed="false" aria-keyshortcuts="M" title="Everything you have, in one graph, read by its marks">Map</button>
+      <button class="hud-l" id="deskBtn" aria-pressed="false" aria-keyshortcuts="H" title="Hide the windows and show the notes pinned to the desk">Desk</button>
       <button class="hud-l ask-b" id="askBtn" aria-keyshortcuts="Meta+K Control+K /" title="Ask, find or note anything">Ask<kbd>⌘K</kbd></button>
       <button class="hud-l lean-b" id="leanBtn" aria-keyshortcuts="L" title="Lean back: your work as a calm sky"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16.5L11 8l7.5 4.5" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/><circle cx="5" cy="16.5" r="1.7" fill="currentColor"/><circle cx="11" cy="8" r="2.1" fill="currentColor"/><circle cx="18.5" cy="12.5" r="1.4" fill="currentColor"/></svg><span>Lean back</span></button>
       <button class="hud-l" id="depthBtn" aria-pressed="false" aria-keyshortcuts="D" title="Show the canopy in depth: the orrery and the flight path">Depth</button>
@@ -197,6 +202,8 @@
     <div class="bx-side"><canvas id="cvBody" aria-label="Training by hour of the day, lighter for easier segments"></canvas><div id="bodySit"></div></div>
   </div>
 </div>
+  <button class="fab fab-d" id="deskFab" aria-label="Hide the windows, show the desk" title="Desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="9" height="7" rx="1"/><rect x="11" y="12" width="9" height="7" rx="1"/></svg></button>
+  <button class="desk-back" id="deskBack" aria-label="Bring the windows back">Windows back</button>
   <button class="fab" id="fab" aria-label="Ask, find or note anything"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.7 4.9 3.1 7.3 8 8-4.9.7-7.3 3.1-8 8-.7-4.9-3.1-7.3-8-8 4.9-.7 7.3-3.1 8-8z" fill="currentColor"/></svg></button>
 </div>
 
@@ -206,6 +213,7 @@
 <form class="note-new" id="noteNew" hidden autocomplete="off">
   <label class="sr" for="noteIn">New note</label>
   <input id="noteIn" type="text" placeholder="A thought, #tag it" enterkeyhint="done">
+  <div class="note-sim" id="noteSim" hidden aria-live="polite"></div>
 </form>
 <ul class="sr" id="notesSr" aria-label="Notes"></ul>
 
@@ -447,6 +455,12 @@
     <span class="year-hb"><span class="year-tb" id="yearTools" aria-label="The graph's tools"></span><button class="hud-l" id="yearX">close</button></span>
   </div>
   <div class="year-f" id="yearF"></div>
+</div>
+
+<div class="map" id="map" hidden role="region" aria-label="Map of everything">
+  <canvas id="cvMap" aria-label="Everything you have, in one graph, read by its marks."></canvas>
+  <div class="map-h"><p class="year-t"><span class="year-k">Map</span></p><input id="mapQ" type="search" class="mp-q" placeholder="Find anything: notes, files, sessions, tasks" aria-label="Find in the map" autocomplete="off"><button class="hud-l" id="mapX">close</button></div>
+  <aside class="map-s"><div id="mapCard" class="mp-card" aria-live="polite"></div><div id="mapPanel" class="mp-panel"></div></aside>
 </div>
 
 <!-- settings: one place for everything you can change -->
