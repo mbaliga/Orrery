@@ -137,8 +137,8 @@
   });
   var LIVE_WALLPAPER = /wallpaper/i;
   var PLATFORMS = T.PLATFORMS = [
-    { id: 'android', name: 'Android', by: 'Google', icon: 'phone', rule: 'Jetpack Compose, Room, WorkManager, CameraX, ML Kit, Media3, Coil, Hilt, Play Billing, a WebView bridge, Capacitor or a Trusted Web Activity',
-      test: function (p) { return uses(p, ['Jetpack Compose', 'Room', 'WorkManager', 'CameraX', 'ML Kit', 'Media3', 'Coil', 'Hilt', 'Play Billing', 'WebView bridge', 'Capacitor', 'Trusted Web Activity']) || LIVE_WALLPAPER.test(p.repo || ''); } },
+    { id: 'android', name: 'Android', by: 'Google', icon: 'phone', rule: 'mostly Kotlin, or Jetpack Compose, Room, WorkManager, CameraX, ML Kit, Media3, Coil, Hilt, Play Billing, a WebView bridge, Capacitor or a Trusted Web Activity, or declared by you',
+      test: function (p) { return uses(p, ['Jetpack Compose', 'Room', 'WorkManager', 'CameraX', 'ML Kit', 'Media3', 'Coil', 'Hilt', 'Play Billing', 'WebView bridge', 'Capacitor', 'Trusted Web Activity']) || LIVE_WALLPAPER.test(p.repo || '') || (p.langs || {}).Kotlin >= 0.5; } },
     { id: 'wearos', name: 'Wear OS', by: 'Google', icon: 'watch', rule: 'Watch Face Format', test: function (p) { return uses(p, ['Wear OS WFF']); } },
     { id: 'garmin', name: 'Garmin', by: 'Garmin', icon: 'watch', rule: 'Connect IQ, in Monkey C', test: function (p) { return uses(p, ['Connect IQ']) || !!(p.langs || {})['Monkey C']; } },
     { id: 'web', name: 'The web', by: '', icon: 'browser', rule: 'Vite, React, Astro, Next.js, Lit, Three.js, D3 or AntV G6, or nothing but web languages',
@@ -154,7 +154,8 @@
     { id: 'actions', name: 'GitHub Actions', by: 'GitHub', icon: 'gear', rule: 'a workflow that runs on GitHub Actions', test: function (p) { return uses(p, ['GitHub Actions']) || p.id === 'orrery' || p.id === 'tracker'; } }
   ];
   // this page itself runs on the web
-  var PLAT_KNOWN = { orrery: ['web'], tracker: ['web'] };
+  // declared by the owner where a scan cannot see it: Alloy and IN-RTS ship to Android without Kotlin in the repo
+  var PLAT_KNOWN = { orrery: ['web'], tracker: ['web'], alloy: ['android'], inrts: ['android'] };
   G.projects.forEach(function (p) {
     p.platforms = PLATFORMS.filter(function (f) { return f.test(p) || (PLAT_KNOWN[p.id] || []).indexOf(f.id) >= 0; }).map(function (f) { return f.id; });
   });
