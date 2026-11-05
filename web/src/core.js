@@ -155,7 +155,7 @@
   ];
   // this page itself runs on the web
   // declared by the owner where a scan cannot see it: Alloy and IN-RTS ship to Android without Kotlin in the repo
-  var PLAT_KNOWN = { orrery: ['web'], tracker: ['web'], alloy: ['android'], inrts: ['android'] };
+  var PLAT_KNOWN = { orrery: ['web'], tracker: ['web'], alloy: ['android'], inrts: ['android'], edge: ['android'], gearvr: ['android'] };
   G.projects.forEach(function (p) {
     p.platforms = PLATFORMS.filter(function (f) { return f.test(p) || (PLAT_KNOWN[p.id] || []).indexOf(f.id) >= 0; }).map(function (f) { return f.id; });
   });
