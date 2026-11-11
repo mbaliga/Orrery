@@ -152,7 +152,7 @@
       var list = el('div', { class: 'links' });
       c.repos.forEach(function (r) {
         var p = T.P.get(r[0]);
-        list.appendChild(el('a', { href: 'https://github.com/mbaliga/' + p.repo + '/pull/' + r[1], target: '_blank', rel: 'noopener' },
+        list.appendChild(el('a', { href: T.repoOwner() ? 'https://github.com/' + T.repoOwner() + '/' + p.repo + '/pull/' + r[1] : null, target: '_blank', rel: 'noopener' },
           el('span', null, p.name), el('span', { class: 'mono' }, '#' + r[1] + (r[2] ? ', ' + r[2] + ' ahead' : ''))));
       });
       pop.appendChild(list);

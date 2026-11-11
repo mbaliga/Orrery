@@ -31,8 +31,9 @@ KIT_SRC = next((d for d in [os.path.join(HERE, "..", "..", "..", "..", "..", "..
 def read_kit(name):
     with open(os.path.join(KIT_SRC, name), encoding="utf-8") as f:
         return f.read()
-JS = ["graph.js", "seed.js", "core.js", "sfx.js", "rhythm.js", "board.js", "plan.js", "deps.js", "horizon.js", "pulse.js", "space.js", "ask.js", "sky.js", "look.js", "settings.js", "year.js", "runway.js", "dial.js", "body.js", "widgets.js", "usage.js", "providers.js", "compile.js", "recall.js", "desk.js", "map.js", "bridge.js", "targets.js", "releases.js", "audit.js", "resume.js", "app.js"]
-script = ("\n".join(read_kit(k) for k in KIT) + "\n" + "\n".join(read(j) for j in JS)).replace("</script", "<\\/script")
+JS = ["graph.js", "seed.js", "userdata.js", "core.js", "sfx.js", "rhythm.js", "board.js", "plan.js", "deps.js", "horizon.js", "pulse.js", "concentration.js", "space.js", "ask.js", "sky.js", "look.js", "settings.js", "year.js", "runway.js", "dial.js", "body.js", "widgets.js", "usage.js", "providers.js", "compile.js", "recall.js", "desk.js", "map.js", "bridge.js", "targets.js", "releases.js", "audit.js", "resume.js", "workspace.js", "app.js"]
+SAMPLE = data_file("graph.js").endswith(".sample.js")  # no data of your own was found: the page is a sample
+script = ("window.ORRERY_BUILD = {sample: " + ("true" if SAMPLE else "false") + "};\n" + "\n".join(read_kit(k) for k in KIT) + "\n" + "\n".join(read(j) for j in JS)).replace("</script", "<\\/script")
 # keep a vendored snapshot beside the sources so the build works without the sibling checkout
 vend = os.path.join(SRC, "vendor", "orrery-kit")
 if KIT_SRC and not KIT_SRC.startswith(vend):
@@ -63,7 +64,7 @@ local_fonts = ("<style>"
                "</style>")
 skeleton = ('<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">'
             '<style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}'
-            'body{margin:0;font:14px system-ui,sans-serif;background:#faf9f5}img{max-width:100%}[hidden]{display:none!important}</style></head><body>')
+            'body{margin:0;font:14px system-ui,sans-serif;background:#faf9f5}:root:not([data-theme=light]) body,:root[data-theme=dark] body{background:#0f1012}:root:not([data-theme=light]){background:#0f1012}img{max-width:100%}[hidden]{display:none!important}</style><script>try{if(location.search.indexOf("welcome=1")<0)localStorage.setItem("tracker.welcomeSeen","true")}catch(e){}</script></head><body>')
 with open(os.path.join(DIST, "test.html"), "w", encoding="utf-8") as f:
     f.write(skeleton + page.replace(FONTS, local_fonts) + "</body></html>")
 print("built", out, len(page), "bytes")

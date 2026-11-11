@@ -35,7 +35,7 @@
     D.W = Math.max(1, Math.round(r.width)); D.H = Math.max(1, Math.round(r.height));
     D.on = D.W > 2 && D.H > 2;
     D.rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    D.dpr = Math.min(2, window.devicePixelRatio || 1);
+    D.dpr = T.pxr();
     D.cv.width = Math.round(D.W * D.dpr); D.cv.height = Math.round(D.H * D.dpr);
     D.land = D.W > D.H * 1.1;
     D.cx = D.W / 2; D.cy = D.H / 2;

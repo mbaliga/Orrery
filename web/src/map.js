@@ -135,7 +135,7 @@
   }
   function kick() { if (!M.raf && M.open) M.raf = requestAnimationFrame(draw); }
   function sizeUp() {
-    var W = window.innerWidth, H = window.innerHeight, dpr = Math.min(2, window.devicePixelRatio || 1), side = W > 900 ? 330 : 0;
+    var W = window.innerWidth, H = window.innerHeight, dpr = T.pxr(), side = W > 900 ? 330 : 0;
     M.dpr = dpr; M.W = W; M.H = H; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
     M.cx = (W - side) / 2; M.cy = H / 2 + 20; M.R = Math.min(W - side, H) * 0.46; if (GE) { GE.options.bounds = function () { return { x: 0, y: 40, w: W - side, h: H - 40 }; }; GE.size(W, H, M.cx, M.cy, M.R); }
     kick();

@@ -217,7 +217,7 @@
   }
   function paintClock() {
     var cv = clockEl, rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    var W = cv.clientWidth || 240, Hh = W + rem * 2.4, dpr = Math.min(2, window.devicePixelRatio || 1);
+    var W = cv.clientWidth || 240, Hh = W + rem * 2.4, dpr = T.pxr();
     cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr);
     var g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, Hh);
     var by = T.segmentsByHour(), keys = Object.keys(by).sort(function (a, b) { return T.segAlpha(a) - T.segAlpha(b); });

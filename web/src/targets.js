@@ -103,66 +103,15 @@
         { id: 'deploy', band: 'build', label: 'Deploys from main', evidence: 'manual' }
       ] },
 
-    // venues and publications: the specs are the calls for papers; the dates and send lists are already on the board
-    { id: 'oii', name: 'OII DPhil', kind: 'venue', api: null, researchedAt: '2026-10-06', sources: [], dated: 's-oii',
-      states: ['none', 'drafting', 'submitted'],
-      steps: [
-        { id: 'proposal', band: 'fields', label: 'Research proposal, 2,500 words', evidence: 'task', task: 't-oii-prop',
-          prompt: 'Outline the OII research proposal for Chakravyuha in 2,500 words: the question, why now, the method, what the evidence would look like, and the fit with the Institute.' },
-        { id: 'statement', band: 'fields', label: 'Personal statement, 500 words', evidence: 'task', task: 't-oii-ps' },
-        { id: 'work', band: 'fields', label: 'Written work, 2,000 words', evidence: 'task', task: 't-oii-work' },
-        { id: 'refs', band: 'gates', label: 'Three referees confirmed', evidence: 'task', task: 'g-refs' },
-        { id: 'transcripts', band: 'assets', label: 'Official transcripts', evidence: 'manual' },
-        { id: 'fee', band: 'account', label: 'Fee, £20, and the application account', evidence: 'manual' }
-      ] },
-    { id: 'dis', name: 'DIS 2027', kind: 'venue', api: null, researchedAt: '2026-10-06', sources: [], dated: 's-dis-a', verify: 'Check the call for papers for anonymisation and format.',
-      states: ['none', 'drafting', 'abstract in', 'submitted'],
-      steps: [
-        { id: 'abstract', band: 'fields', label: 'Title and abstract by 11 January, anywhere on Earth', evidence: 'task', task: 't-dis',
-          prompt: 'Draft a 150-word abstract for the DIS pictorial on Chakravyuha: instruments, not apps.' },
-        { id: 'pictorial', band: 'assets', label: 'Pictorial, 12 pages at most, by 18 January', evidence: 'task', task: 't-dis' },
-        { id: 'format', band: 'gates', label: 'Template and anonymisation as the call requires', evidence: 'manual', verify: true }
-      ] },
-    { id: 'chi', name: 'CHI 2027', kind: 'venue', api: null, researchedAt: '2026-10-06', sources: [], dated: 's-chi', verify: 'Check the call for papers for anonymisation and format.',
-      states: ['none', 'drafting', 'submitted'],
-      steps: [
-        { id: 'paper', band: 'fields', label: 'Poster paper, 4 pages, by 21 January', evidence: 'task', task: 't-chi' },
-        { id: 'preprint', band: 'gates', label: 'Preprint out first', evidence: 'task', task: 't-preprint' },
-        { id: 'format', band: 'gates', label: 'Template and anonymisation as the call requires', evidence: 'manual', verify: true }
-      ] },
-    { id: 'iui', name: 'IUI 2027', kind: 'venue', api: null, researchedAt: '2026-10-06', sources: [], dated: 's-iui',
-      states: ['skip', 'drafting', 'submitted'], steps: [
-        { id: 'decide', band: 'gates', label: 'Decide: the default is to skip while Fonebrew is not public', evidence: 'manual' }
-      ] },
-    { id: 'arxiv', name: 'arXiv', kind: 'venue', api: null, researchedAt: '2026-10-06', sources: [], dated: 's-preprint',
-      states: ['none', 'drafting', 'posted'],
-      steps: [
-        { id: 'endorse', band: 'account', label: 'Three cs.HC endorsers, or OSF Preprints instead', evidence: 'task', task: 'g-endorse' },
-        { id: 'writeup', band: 'fields', label: 'The preprint', evidence: 'task', task: 't-preprint' }
-      ] },
-    { id: 'medium', name: 'Medium', kind: 'publication', api: null, researchedAt: '2026-10-06', sources: [], minor: 'M', states: ['none', 'drafting', 'posted'],
-      steps: [{ id: 'draft', band: 'fields', label: 'The draft', evidence: 'task' }, { id: 'post', band: 'build', label: 'Posted on the day', evidence: 'date' }] },
-    { id: 'stackoverflow', name: 'Stack Overflow', kind: 'publication', api: null, researchedAt: '2026-10-06', sources: [], minor: 'S', states: ['none', 'drafting', 'posted'],
-      steps: [{ id: 'draft', band: 'fields', label: 'Question and answer, written as one', evidence: 'task' }, { id: 'post', band: 'build', label: 'Posted on the day', evidence: 'date' }] },
-    { id: 'newsletter', name: 'Newsletter', kind: 'publication', api: null, researchedAt: '2026-10-06', sources: [], minor: 'N', states: ['none', 'drafting', 'sent'],
-      steps: [{ id: 'draft', band: 'fields', label: 'The issue', evidence: 'task' }, { id: 'post', band: 'build', label: 'Sent on the day', evidence: 'date' }] },
-    { id: 'noema', name: 'Noema', kind: 'publication', api: null, researchedAt: '2026-10-06', sources: [], dated: 's-noema', states: ['none', 'drafting', 'submitted'],
-      steps: [{ id: 'draft', band: 'fields', label: 'Full draft, about 3,500 words', evidence: 'task', task: 't-noema' }, { id: 'send', band: 'build', label: 'Sent to edit@noemamag.com under your own name', evidence: 'date' }] },
-    { id: 'pudding', name: 'The Pudding', kind: 'publication', api: null, researchedAt: '2026-10-06', sources: [], dated: 's-pudding', states: ['none', 'drafting', 'pitched'],
-      steps: [{ id: 'pitch', band: 'fields', label: 'The pitch: The Price of Watching', evidence: 'task', task: 't-pudding' }] }
+
+    // venues, publications and anything else of your own come from your data (SEED.targets), in this same shape
   ];
+  T.TARGETS = T.TARGETS.concat((window.TRACKER_SEED && window.TRACKER_SEED.targets) || []);
   T.targetById = function (id) { for (var i = 0; i < T.TARGETS.length; i++) if (T.TARGETS[i].id === id) return T.TARGETS[i]; return null; };
 
   // which store each platform ships through
   T.PLATFORM_TARGET = { android: 'play', wearos: 'play-wear', garmin: 'connectiq', gfonts: 'google-fonts', figma: 'figma-community', web: 'web', desktop: 'github-releases' };
 
-  // facts read from the repos on 17 October 2026, by hand, for this prototype; the scanner writes these in the build
-  T.FACTS = {
-    fonebrew: { 'data-safety': { ok: true, where: 'Android-IDE-Studio docs/play/data-safety.md' }, 'content-rating': { ok: true, where: 'docs/play/content-rating.md' },
-      'privacy-policy': { ok: false, where: 'docs/play/privacy-policy.md is a draft; hosting is an owner decision' }, 'genai': { ok: true, where: 'docs/play/genai-declaration.md' },
-      'no-tracking': { ok: true, where: 'docs/play/data-safety.md: no analytics, ads or crash SDKs' } },
-    hyledeco: { ofl: { ok: true, where: 'OFL-1.1 by construction (Google Fonts requirement)' } },
-    nooz: { 'no-tracking': { ok: true, where: 'backendless, on-device or BYOK' }, floss: { ok: true, where: 'open source by its own README' } },
-    asoc: { license: { ok: true, where: 'public repo' } }
-  };
+  // facts read from the repos: yours, from your data (SEED.facts: { projectId: { stepFact: { ok, where } } }); the scanner writes these in the build
+  T.FACTS = (window.TRACKER_SEED && window.TRACKER_SEED.facts) || {};
 })();

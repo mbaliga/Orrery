@@ -494,7 +494,7 @@
   // ---------------------------------------------------------------- size
   function size() {
     var W = window.innerWidth, H = window.innerHeight, rem = Y.rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var dpr = T.pxr();
     if (W * H * dpr * dpr > 9e6) dpr = Math.max(1, Math.sqrt(9e6 / (W * H)));
     Y.W = W; Y.H = H; Y.dpr = dpr;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);

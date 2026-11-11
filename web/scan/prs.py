@@ -24,7 +24,7 @@ spec = importlib.util.spec_from_file_location("scan", os.path.join(HERE, "scan.p
 scan = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(scan)
 
-SINCE = "2026-05-01"
+SINCE = scan.SINCE
 FMT = "%H%x1f%an%x1f%ae%x1f%aI%x1f%s%x1f%(trailers:key=Co-authored-by,valueonly,separator=%x3B)"
 
 

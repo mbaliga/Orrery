@@ -26,6 +26,8 @@
       else e.setAttribute(k, v === true ? '' : v);
     });
   }
+  // canvas pixel ratio: the screen's own, never below 1.5 so a 1x screen is drawn at 1.5x and scaled down smooth, never above 3
+  T.pxr = function () { return Math.min(3, Math.max(1.5, window.devicePixelRatio || 1)); };
   T.el = function (tag, attrs) {
     var e = document.createElement(tag);
     apply(e, attrs, false);
@@ -142,22 +144,25 @@
     { id: 'wearos', name: 'Wear OS', by: 'Google', icon: 'watch', rule: 'Watch Face Format', test: function (p) { return uses(p, ['Wear OS WFF']); } },
     { id: 'garmin', name: 'Garmin', by: 'Garmin', icon: 'watch', rule: 'Connect IQ, in Monkey C', test: function (p) { return uses(p, ['Connect IQ']) || !!(p.langs || {})['Monkey C']; } },
     { id: 'web', name: 'The web', by: '', icon: 'browser', rule: 'Vite, React, Astro, Next.js, Lit, Three.js, D3 or AntV G6, or nothing but web languages',
-      test: function (p) { return uses(p, ['Vite', 'React', 'Astro', 'Next.js', 'Lit', 'Three.js', 'D3', 'AntV G6']) || (onlyWeb(p) && !LIVE_WALLPAPER.test(p.repo || '') && !uses(p, ['Figma Plugin API']) && p.id !== 'hyledeco'); } },
+      test: function (p) { return uses(p, ['Vite', 'React', 'Astro', 'Next.js', 'Lit', 'Three.js', 'D3', 'AntV G6']) || (onlyWeb(p) && !LIVE_WALLPAPER.test(p.repo || '') && !uses(p, ['Figma Plugin API'])); } },
     { id: 'desktop', name: 'Desktop', by: '', icon: 'desktop', rule: 'Tauri, Compose Multiplatform, OrcaSlicer, or Bluetooth streaming with bleak',
       test: function (p) { return uses(p, ['Tauri', 'Compose Multiplatform', 'OrcaSlicer', 'bleak']); } },
     { id: 'play', name: 'Google Play', by: 'Google', icon: 'store', rule: 'Play Billing, or a release to Play recorded on the board',
       test: function (p) { return uses(p, ['Play Billing']) || (released[p.id] || []).indexOf('play') >= 0; } },
-    { id: 'gfonts', name: 'Google Fonts', by: 'Google', icon: 'font', rule: 'a font made for the Google Fonts library', test: function (p) { return p.id === 'hyledeco'; } },
+    { id: 'gfonts', name: 'Google Fonts', by: 'Google', icon: 'font', rule: 'a font made for the Google Fonts library (declared: a scan cannot tell)', test: function () { return false; } },
     { id: 'figma', name: 'Figma', by: 'Figma', icon: 'design', rule: 'the Figma Plugin API', test: function (p) { return uses(p, ['Figma Plugin API']); } },
     { id: 'vercel', name: 'Vercel', by: 'Vercel', icon: 'cloud', rule: 'a site deployed on Vercel', test: function (p) { return uses(p, ['Vercel']); } },
     { id: 'cloudflare', name: 'Cloudflare', by: 'Cloudflare', icon: 'cloud', rule: 'Cloudflare Workers', test: function (p) { return uses(p, ['Cloudflare Workers']); } },
-    { id: 'actions', name: 'GitHub Actions', by: 'GitHub', icon: 'gear', rule: 'a workflow that runs on GitHub Actions', test: function (p) { return uses(p, ['GitHub Actions']) || p.id === 'orrery' || p.id === 'tracker'; } }
+    { id: 'actions', name: 'GitHub Actions', by: 'GitHub', icon: 'gear', rule: 'a workflow that runs on GitHub Actions', test: function (p) { return uses(p, ['GitHub Actions']); } }
   ];
-  // this page itself runs on the web
-  // declared by the owner where a scan cannot see it: Alloy and IN-RTS ship to Android without Kotlin in the repo
-  var PLAT_KNOWN = { orrery: ['web'], tracker: ['web'], alloy: ['android'], inrts: ['android'], edge: ['android'], gearvr: ['android'] };
+  // where a scan cannot see it, the data says: SEED.platforms adds, SEED.platformsNot takes away; and what you set under
+  // Settings, "Where each project runs" (T.store 'platforms'), is the last word and replaces the project's list
+  var PLAT_KNOWN = SEED.platforms || {}, PLAT_NOT = SEED.platformsNot || {}, PLAT_SET = T.store.get('platforms', {}) || {};
+  T.platformsInferred = {};
   G.projects.forEach(function (p) {
-    p.platforms = PLATFORMS.filter(function (f) { return f.test(p) || (PLAT_KNOWN[p.id] || []).indexOf(f.id) >= 0; }).map(function (f) { return f.id; });
+    var inferred = PLATFORMS.filter(function (f) { return (f.test(p) || (PLAT_KNOWN[p.id] || []).indexOf(f.id) >= 0) && (PLAT_NOT[p.id] || []).indexOf(f.id) < 0; }).map(function (f) { return f.id; });
+    T.platformsInferred[p.id] = inferred;
+    p.platforms = Array.isArray(PLAT_SET[p.id]) ? PLAT_SET[p.id].filter(function (id) { return PLATFORMS.some(function (f) { return f.id === id; }); }) : inferred;
   });
   PLATFORMS.forEach(function (f) {
     if (G.projects.some(function (p) { return p.platforms.indexOf(f.id) >= 0; }))

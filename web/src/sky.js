@@ -21,7 +21,7 @@
   function pageOf(p) {
     var pg = (SEED.pages || {})[p.id];
     if (pg) return pg;
-    return p.vis === 'public' && p.src === 'scan' && SEED.repoOwner ? 'https://github.com/' + SEED.repoOwner + '/' + p.repo : null;
+    return p.vis === 'public' && p.src === 'scan' && T.repoOwner() ? 'https://github.com/' + T.repoOwner() + '/' + p.repo : null;
   }
   var HOLD = 11000, FADE = 1400;
 
@@ -314,7 +314,7 @@
   // ---------------------------------------------------------------- drawing
   function size() {
     K.W = window.innerWidth; K.H = window.innerHeight;
-    K.dpr = Math.min(2, window.devicePixelRatio || 1);
+    K.dpr = T.pxr();
     if (K.W * K.H * K.dpr * K.dpr > 9e6) K.dpr = Math.max(1, Math.sqrt(9e6 / (K.W * K.H)));
     K.rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     cv.width = Math.round(K.W * K.dpr); cv.height = Math.round(K.H * K.dpr);

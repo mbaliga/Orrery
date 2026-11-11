@@ -1145,7 +1145,7 @@ window.TRACKER_SEED = {
   "label": "A sprint, about twelve hours a week"
  },
  "pages": {},
- "repoOwner": "mbaliga",
+ "repoOwner": "",
  "aliases": {},
  "ambitions": {
   "p1": "What Alder is for, in a sentence or two, as the owner wrote it.",

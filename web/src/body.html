@@ -103,16 +103,9 @@
         <div class="us" id="usage"></div>
         <p class="cap" id="usageNote"></p>
       </section>
-      <section class="mod signal v-crew" id="m-signal" aria-label="Signal">
-        <h2 class="mod-t">Signal <span class="tag-s">simulated</span><span class="mod-s">MW75 Neuro, 12 channels, 500 Hz</span></h2>
-        <canvas class="sig-c" id="sigCanvas" aria-label="EEG trace, three channels"></canvas>
-        <div class="sig-row">
-          <div class="bands" id="bands" aria-label="Band power"></div>
-          <div class="cups" id="cups" aria-label="Contact quality"></div>
-        </div>
-        <button class="sw" id="liveSw" aria-pressed="false"><span class="sw-t"></span><span id="sigLive"></span></button>
-        <h3 class="mod-t sub-t">After each block <span class="tag-s">simulated</span></h3>
-        <ul class="rows" id="afterBlocks"></ul>
+      <section class="mod signal v-crew" id="m-signal" aria-label="Concentration">
+        <h2 class="mod-t">Concentration <span class="mod-s">whole, or in pieces</span><span class="info-at" data-info="Each column is a week. Its blocks are the projects you committed to that week, tallest first. One tall block is a week spent whole in one project; a column of slivers is a week spread across many. It is read from the scan's commit counts, yours and your agents', filtered by the lens. Nothing here is estimated or simulated."></span></h2>
+        <div class="cz" id="czHost"></div>
       </section>
       <section class="mod focus v-crew v-today" id="m-focus" aria-label="Focus">
         <h2 class="mod-t">Focus <span class="mod-s">sound made on this device</span><span class="info-at" data-info="Bars are your median focus block with each sound. Sample until the headset is connected. Noise helps some people and slows others, so the record that counts is yours." data-label="About the sounds"></span></h2>
@@ -395,10 +388,10 @@
 
     <h3>Time: countdowns, nudges and sends</h3>
     <ul class="bul">
-      <li><strong>Every date has a ladder.</strong> The OII application nudges at 42, 28, 14, 7, 3, 2 and 1 days, and asks you to send two days early. A Stack Overflow post nudges the day before and on the morning.</li>
-      <li><strong>Every date has a send list.</strong> What has to go out, each item tied to its task, so a countdown also says how much is ready: OII is 0 of 6 today.</li>
+      <li><strong>Every date has a ladder.</strong> A deadline nudges at 42, 28, 14, 7, 3, 2 and 1 days, and asks you to send two days early. A Stack Overflow post nudges the day before and on the morning.</li>
+      <li><strong>Every date has a send list.</strong> What has to go out, each item tied to its task, so a countdown also says how much is ready: a deadline can be 0 of 6 ready.</li>
       <li><strong>Delivery.</strong> Push through ntfy to the phone, iPad and the desktop, and a calendar feed for the fixed dates. Both come from the Action, so nothing depends on this page being open.</li>
-      <li><strong>Real dates on this page.</strong> OII closes at 12:00 midday UK time on Thursday 7 January 2027. DIS 2027 wants pictorial abstracts on 11 January and full pictorials on 18 January, anywhere on Earth. CHI 2027 posters close on 21 January, anywhere on Earth. The publishing rhythm is your Tool as Argument calendar, replanned on 6 October. Fonebrew has no date, by its own rule.</li>
+      <li><strong>Your own dates.</strong> Add what you are working towards to your seed (<code>schedule</code>), each with its time zone and its send list; the page counts down to it, in your own clock, and nudges on the ladder above.</li>
     </ul>
 
     <h3>Orrery, as a product</h3>

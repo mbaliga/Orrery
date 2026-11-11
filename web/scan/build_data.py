@@ -7,9 +7,10 @@ Every node and edge carries where it came from:
   "scan"  measured from git today
   "notes" filled from notes because the repo is private and was not scanned
 
-Usage:  python3 -I build_data.py <scan.json> <prs.json> <out.js>
+Usage:  python3 -I build_data.py <scan.json> <prs.json> <out.js> [workspace.json]
 """
 import json
+import os
 import re
 import sys
 from collections import Counter, defaultdict
@@ -19,8 +20,30 @@ scan_path, prs_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
 META = json.load(open(scan_path))
 SCAN = {r["name"]: r for r in META["repos"] if r.get("ok")}
 PRS = json.load(open(prs_path))
-IST = timezone(timedelta(hours=5, minutes=30))
+IST = timezone(timedelta(seconds=float(os.environ.get('ORRERY_UTC_OFFSET_HOURS', datetime.now().astimezone().utcoffset().total_seconds() / 3600)) * 3600))  # the hours chart reads in your own clock
 SCANNED = datetime.fromisoformat(META["scanned_at"].replace("Z", "+00:00"))
+
+
+# ---------------------------------------------------------------- your workspace
+# Names, clusters and what is known about private repos are yours, not this script's: pass a workspace.json
+# (scan/workspace.example.json shows the shape) as the 4th argument or in $ORRERY_WORKSPACE. With none, every scanned repo
+# becomes a project in one group, named as the repo is, and nothing else is assumed.
+_wp = sys.argv[4] if len(sys.argv) > 4 else os.environ.get("ORRERY_WORKSPACE")
+WS = json.load(open(_wp)) if _wp else {}
+
+
+def _slug(s):
+    return re.sub(r"[^a-z0-9]+", "", s.lower()) or "p"
+
+
+P = [tuple(x) for x in WS.get("projects", [])] or [(_slug(n), n, n, "all", "active", "public") for n in sorted(SCAN)]
+CLUSTERS = [tuple(x) for x in WS.get("clusters", [])] or [("all", "Projects")]
+NOTES = WS.get("notes", {})
+SHARED_RULES = WS.get("shared_rules", {})
+SHARED_EXTRA = WS.get("shared_extra", {})
+SHARED_LABEL = WS.get("shared_label", {})
+SHARED_HOME = WS.get("shared_home", {})
+WORDS = WS.get("words", {})
 
 
 def parse(t):
@@ -29,91 +52,10 @@ def parse(t):
 
 # ---------------------------------------------------------------- projects
 # id, display name, repo, cluster, state, visibility
-P = [
-    # Fonebrew family
-    ("fonebrew", "Fonebrew", "Android-IDE-core", "fonebrew", "active", "public"),
-    ("studio", "Fonebrew Studio", "Android-IDE-Studio", "fonebrew", "stalled", "private"),
-    ("asom", "ASOM", "asystemofmodels", "fonebrew", "active", "public"),
-    ("assay", "Assay", "assay", "fonebrew", "active", "public"),
-    ("csapp", "CS App", "csapp", "fonebrew", "active", "public"),
-    ("orrery", "Orrery", "Orrery", "fonebrew", "seeded", "public"),
-    ("aarso", "Aarso", "Aarso", "fonebrew", "parked", "private"),
-    # everyday tools
-    ("fylz", "Fylz", "Fyl-Manager", "tools", "active", "public"),
-    ("fotoz", "Fotoz", "Foto-Xplorr", "tools", "active", "public"),
-    ("clackpad", "Clackpad", "Clackpad", "tools", "shipping", "private"),
-    ("nooz", "Nooz", "nooz", "tools", "shipping", "public"),
-    ("bos", "BOS Launcher", "BOS_launcher", "tools", "stalled", "public"),
-    ("edge", "Redmagic Edge", "Redmagic-Edge", "tools", "parked", "public"),
-    # maker tools
-    ("alloy", "Alloy", "Alloy", "maker", "active", "public"),
-    ("typewright", "Typewright", "Typewright", "maker", "active", "public"),
-    ("hafx", "HAfx", "hnm_playground", "maker", "active", "public"),
-    ("figma", "Figma plugins", "asystemofcells-figma", "maker", "seeded", "private"),
-    # body and signal
-    ("baseline", "Baseline", "baseline", "signal", "parked", "private"),
-    ("ebbflow", "Ebbflow", "Ebbflow", "signal", "active", "public"),
-    ("mw75", "mw75-streamer", "mw75-streamer", "signal", "parked", "public"),
-    ("crocodyl", "Crocodyl", "Form-analyser", "signal", "active", "public"),
-    ("bocal", "Bocal", "Bocal", "signal", "active", "public"),
-    # play
-    ("animalcules", "Animalcules", "Animalcules", "play", "shipping", "private"),
-    ("argonautica", "Argonautica", "RTS-live-wallpapers", "play", "active", "private"),
-    ("inrts", "IN-RTS", "IN-RTS", "play", "active", "private"),
-    ("watch", "Watch faces", "Watch-Apps", "play", "active", "private"),
-    ("runout", "Runout", "Music_Player", "play", "seeded", "public"),
-    ("clavis", "Clavis", "Clavis", "play", "active", "private"),
-    ("gearvr", "LG Gear VR port", "LG-Gear-VR-port", "play", "parked", "public"),
-    # research
-    ("chakravyuha", "Chakravyuha", "chakravyuha", "research", "active", "private"),
-    # foundations
-    ("hyle", "Hyle", "Hyle-Design-System", "foundations", "active", "public"),
-    ("hyledeco", "Hyle Deco", "HyleDeco-gf", "foundations", "active", "public"),
-    ("shared", "Shared Libraries", "Shared-Libraries-asoc", "foundations", "active", "public"),
-    ("twa", "twa-template", "twa-template", "foundations", "seeded", "public"),
-    ("tracker", "Personal Tracker", "Personal-Tracker", "foundations", "active", "private"),
-    # web
-    ("asoc", "asystemofcells.com", "asystemofcells", "web", "shipping", "public"),
-    ("portfolio", "mdhv.xyz", "portfolio", "web", "shipping", "private"),
-    ("artstudio", "Art Studio", "Art-Studio", "web", "seeded", "public"),
-]
-CLUSTERS = [
-    ("fonebrew", "Fonebrew family"), ("tools", "Everyday tools"), ("maker", "Maker tools"),
-    ("signal", "Body and signal"), ("play", "Play"), ("research", "Research"),
-    ("foundations", "Foundations"), ("web", "Web"),
-]
 REPO_PID = {repo: pid for pid, _n, repo, _c, _s, _v in P}
 
 # What is known about the private repos (not scanned). Activity is a rough guess and is drawn
 # as an outline, never as a measured value. "pushed" is the real last-push date of the repo.
-NOTES = {
-    "studio": dict(langs={"Kotlin": 1}, tech=["Jetpack Compose", "Room", "OkHttp", "llama.cpp"],
-                   shared=["hyle", "crash-recovery"], est=22, pushed="2026-09-16"),
-    "aarso": dict(langs={"Kotlin": 1}, tech=[], shared=[], est=4, pushed="2026-09-12"),
-    "clackpad": dict(langs={"Kotlin": .55, "JavaScript": .3, "HTML": .15},
-                     tech=["ML Kit", "MediaPipe", "Play Billing", "WebView bridge"],
-                     shared=["crash-recovery", "diagnostics"], est=46, pushed="2026-09-30"),
-    "figma": dict(langs={"TypeScript": 1}, tech=["Figma Plugin API"], shared=["hyle", "twa-template"],
-                  est=6, pushed="2026-09-12"),
-    "baseline": dict(langs={"Kotlin": 1}, tech=[], shared=["evidence-schema", "mw75-stream"], est=6,
-                     pushed="2026-09-16"),
-    "animalcules": dict(langs={"Kotlin": .5, "JavaScript": .4, "Rust": .1},
-                        tech=["Canvas and WebGL", "Tauri", "Play Billing"], shared=["crash-recovery"],
-                        est=34, pushed="2026-09-28"),
-    "argonautica": dict(langs={"JavaScript": .7, "GLSL": .2, "HTML": .1}, tech=["Canvas and WebGL"],
-                        shared=[], est=30, pushed="2026-09-29"),
-    "inrts": dict(langs={}, tech=[], shared=[], est=14, pushed="2026-09-16"),
-    "watch": dict(langs={"Monkey C": .4, "JavaScript": .35, "Python": .15, "HTML": .1},
-                  tech=["Connect IQ", "Wear OS WFF", "Canvas and WebGL"], shared=[], est=10,
-                  pushed="2026-09-12"),
-    "clavis": dict(langs={"JavaScript": .8, "HTML": .2}, tech=["AntV G6", "Canvas and WebGL"], shared=[],
-                   est=40, pushed="2026-10-01"),
-    "chakravyuha": dict(langs={"JavaScript": .6, "Python": .4}, tech=["D3"], shared=[], est=3,
-                        pushed="2026-05-23"),
-    "tracker": dict(langs={"Shell": 1}, tech=["GitHub Actions"], shared=[], est=12, pushed="2026-10-06"),
-    "portfolio": dict(langs={"JavaScript": .9, "CSS": .1}, tech=["React", "Vite", "Three.js", "Vercel"],
-                      shared=[], est=8, pushed="2026-09-12"),
-}
 
 # ------------------------------------------------------------ tech mapping
 TECH_RULES = [
@@ -142,38 +84,7 @@ SUBMODULE_TECH = {
     "OrcaSlicer": "OrcaSlicer", "libarchive": "libarchive", "zstd": "libarchive",
     "lz4": "libarchive", "xz": "libarchive", "zlib": "libarchive", "bzip2": "libarchive",
 }
-SHARED_RULES = {
-    "dev.aarso:hyle": "hyle", "includeBuild:hyle-design-system": "hyle",
-    "dev.aarso:crash-recovery": "crash-recovery", "dev.aarso:cell-shell": "cell-shell",
-    "dev.aarso:search-core": "search-core", "dev.aarso:evidence-schema": "evidence-schema",
-    "dev.aarso:feedback": "feedback",
-}
 # Shared links that live outside build files (documented in READMEs and the registry).
-SHARED_EXTRA = {
-    "fonebrew": ["model-catalogue", "asom-router", "search-core"], "nooz": ["model-catalogue", "asom-router"],
-    "ebbflow": ["mw75-stream", "baseline-engine", "evidence-schema"],
-    "crocodyl": ["baseline-engine", "evidence-schema", "crash-recovery"],
-    "baseline": ["mw75-stream"], "asoc": ["asoc-kit"], "bos": ["crash-recovery"],
-    "hafx": ["crash-recovery"], "bocal": ["local-session"], "clackpad": ["asom-router"],
-    "assay": ["evidence-bus"], "csapp": ["evidence-bus"], "orrery": ["evidence-bus"],
-    "studio": ["evidence-bus"], "hyle": ["hyle-fonts"], "typewright": ["hyle-fonts"],
-    "fylz": ["search-core"], "fotoz": ["search-core"],
-}
-SHARED_LABEL = {
-    "hyle": "Hyle tokens", "crash-recovery": "crash-recovery", "cell-shell": "cell-shell",
-    "search-core": "search-core", "evidence-schema": "evidence-schema", "feedback": "feedback",
-    "diagnostics": "diagnostics", "model-catalogue": "model catalogue", "asom-router": "ASOM router",
-    "mw75-stream": "MW75 stream", "baseline-engine": "Baseline engine", "asoc-kit": "@asoc/kit",
-    "local-session": "local-session", "evidence-bus": "audit bus", "hyle-fonts": "Hyle fonts",
-    "twa-template": "TWA template",
-}
-SHARED_HOME = {  # which project owns the shared thing
-    "hyle": "hyle", "crash-recovery": "shared", "cell-shell": "shared", "search-core": "shared",
-    "evidence-schema": "shared", "feedback": "shared", "diagnostics": "shared",
-    "model-catalogue": "nooz", "asom-router": "asom", "mw75-stream": "mw75",
-    "baseline-engine": "baseline", "asoc-kit": "asoc", "local-session": "shared",
-    "evidence-bus": "assay", "hyle-fonts": "hyledeco", "twa-template": "twa",
-}
 LANG_FOLD = {"CMake": None, "AIDL": None, "CSS": "HTML and CSS", "HTML": "HTML and CSS", "Astro": "JavaScript",
              "Java": "Java", "C": "C and C++", "C++": "C and C++"}
 
@@ -188,9 +99,26 @@ KINDS = [("build", "Build"), ("docs", "Plans and docs"), ("ci", "CI and tooling"
          ("fix", "Fix"), ("design", "Design"), ("release", "Release")]
 
 
+def _me():
+    names = [x.strip().lower() for x in os.environ.get("ORRERY_ME", "").split(",") if x.strip()]
+    if not names:
+        import subprocess
+        for k in ("user.name", "user.email"):
+            try:
+                v = subprocess.run(["git", "config", "--global", k], capture_output=True, text=True, timeout=10).stdout.strip().lower()
+            except Exception:
+                v = ""
+            if v:
+                names.append(v)
+    return tuple(names)
+
+
+_ME = _me()
+
+
 def agent_of(label):
     l = (label or "").lower()
-    if l in ("madhav baliga", "mbaliga"):
+    if l in _ME:
         return "you"
     if "codex" in l:
         return "codex"
@@ -208,10 +136,6 @@ def agent_of(label):
 
 
 # ---------------------------------------------------------------- branch names -> titles
-WORDS = {"fylz": "Fylz", "fotoz": "Fotoz", "asom": "ASOM", "ci": "CI", "ui": "UI", "ut": "UT", "mvp": "MVP",
-         "crocodyl": "Crocodyl", "fonebrew": "Fonebrew", "hyle": "Hyle", "alloy": "Alloy", "nooz": "Nooz",
-         "mw75": "MW75", "api": "API", "ime": "IME", "p1": "P1", "pr7": "PR 7", "g1": "G1", "vr": "VR",
-         "b": "B", "prusa": "Prusa"}
 REAL_WORDS = {"status", "update", "system", "design", "layout", "module", "engine", "schema", "search", "launch",
               "widget", "plugin", "visual", "render", "native", "mobile", "tablet", "export", "import", "remote",
               "review", "branch", "mirror", "colour", "colors", "themes", "tokens", "studio", "parity", "splits"}

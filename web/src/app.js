@@ -211,6 +211,7 @@
     if (T.initDesk) T.initDesk();
     if (T.initMap) T.initMap();
     if (T.initBridge) T.initBridge();
+    if (T.initWorkspace) T.initWorkspace();
     T.initBody();
     T.initSettings();
     // the explanations that wait behind an info mark
@@ -258,7 +259,7 @@
       if (ev.target && ev.target.isContentEditable) return;
       var tag = (ev.target.tagName || '').toLowerCase();
       // ask, from anywhere
-      if (T.settingsOpen()) return;
+      if (T.settingsOpen() || (T.sheetOpen && T.sheetOpen())) return;
       if ((ev.metaKey || ev.ctrlKey) && !ev.altKey && (ev.key === 'k' || ev.key === 'K')) { if (T.isVisitor()) return; ev.preventDefault(); if (T.askOpen()) T.closeAsk(); else T.openAsk(''); return; }
       if (T.bodyOpen && T.bodyOpen()) { if (ev.key === 'Escape' || ev.key === 'b' || ev.key === 'B') { ev.preventDefault(); T.closeBody(); } return; }
       if (T.askOpen() || T.yearOpen() || (T.mapOpen && T.mapOpen())) return;

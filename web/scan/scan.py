@@ -24,8 +24,27 @@ import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
-SINCE = "2026-05-01"
-OWNER_NAMES = ("madhav baliga", "mbaliga")
+# the window and who "you" are come from you: $ORRERY_SINCE (YYYY-MM-DD, default the last 180 days) and $ORRERY_ME (names or
+# e-mail addresses of yours, comma-separated; default your git user.name and user.email)
+SINCE = os.environ.get("ORRERY_SINCE") or (datetime.now(timezone.utc) - timedelta(days=180)).strftime("%Y-%m-%d")
+
+
+def _me():
+    names = [x.strip().lower() for x in os.environ.get("ORRERY_ME", "").split(",") if x.strip()]
+    if not names:
+        for k in ("user.name", "user.email"):
+            try:
+                v = subprocess.run(["git", "config", "--global", k], capture_output=True, text=True, timeout=10).stdout.strip().lower()
+            except Exception:
+                v = ""
+            if v:
+                names.append(v)
+    return tuple(names)
+
+
+OWNER_NAMES = _me()
+# Maven groups that are your own modules, not third-party libraries: $ORRERY_INTERNAL, comma-separated (e.g. com.example)
+INTERNAL_GROUPS = tuple(x.strip() for x in os.environ.get("ORRERY_INTERNAL", "").split(",") if x.strip()) or ("\0",)
 DEPTH = "400"
 
 EXT_LANG = {
@@ -107,7 +126,7 @@ def classify(author, email, coauthors, ref):
     r = (ref or "").replace("refs/heads/", "")
     if r.startswith(("codex/", "agent/", "batch/")):
         return "codex", "Codex (by branch)"
-    if author.strip().lower() not in OWNER_NAMES:
+    if author.strip().lower() not in OWNER_NAMES and (email or "").strip().lower() not in OWNER_NAMES:
         return "named", author
     return "person", author
 
@@ -289,7 +308,7 @@ def scan_repo(full, cache):
                     g, a = m.group(1), m.group(2)
                     if "." not in g:
                         continue
-                    (internal if g.startswith(("dev.aarso", "xyz.mdhv", "com.asoc")) else deps)[g + ":" + a] += 1
+                    (internal if g.startswith(INTERNAL_GROUPS) else deps)[g + ":" + a] += 1
                 for m in re.finditer(r'includeBuild\(\s*"([^"]+)"', txt):
                     internal["includeBuild:" + m.group(1)] += 1
                 for m in re.finditer(r'\blibs\.([A-Za-z0-9_.]+)', txt):
@@ -321,7 +340,7 @@ def scan_repo(full, cache):
             continue
         if mod:
             g = mod.split(":")[0]
-            (internal if g.startswith(("dev.aarso", "xyz.mdhv", "com.asoc")) else deps)[mod] += 1
+            (internal if g.startswith(INTERNAL_GROUPS) else deps)[mod] += 1
     out["manifests"] = sorted(manifests)[:40]
     out["deps"] = dict(deps.most_common(80))
     out["internal"] = dict(internal)

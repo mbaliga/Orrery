@@ -25,6 +25,24 @@ note and page renamed, so the page builds and runs for anyone. Keep your own two
 Still in code and due to move into data: the per-project store-readiness entries in `src/targets.js` and the dated
 notes in the wiring sheet of `src/body.html`.
 
+## Make it yours (no rebuild)
+Open `dist/personal-tracker.html`. On a sample build a welcome sheet appears; it is also under Settings > Data > Show the welcome sheet.
+```
+# 1. scan your repos with git alone (no token). The window and who "you" are come from you:
+export ORRERY_ME="Your Name,you@example.com"      # your commits count as yours
+export ORRERY_SINCE=2026-05-01                    # default: the last 180 days
+python3 scan/scan.py cache scan.json owner/repo owner/other-repo
+python3 scan/prs.py  cache scan.json prs.json
+python3 scan/build_data.py scan.json prs.json graph.js [workspace.json]   # see scan/workspace.example.json for names and groups
+
+# 2. optional: your own tasks, dates and notes, as JSON (seed.js is code; the page only ever reads JSON)
+node scan/tojson.js seed.js > seed.json
+```
+Then load `graph.js` (and `seed.json`) in the welcome sheet, or Settings > Data > Load my workspace, and name your GitHub account so links
+point at it. They stay in this browser (localStorage) and nothing is sent anywhere. Settings > Data > Where each project runs lets you
+tick platforms a scan cannot see; your choice wins over the scan. Settings > Data > Back to the built-in data undoes all of it.
+Putting your platforms, targets and facts in your own seed (`platforms`, `platformsNot`, `targets`, `facts`) keeps them across rebuilds.
+
 ## Tests (Playwright, headless Chromium)
 ```
 node tests/steps.js <size> '<json steps>' [hash]   # sizes: g9 g9low ipad ipadp pane phone laptop desk

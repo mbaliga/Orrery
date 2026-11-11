@@ -40,7 +40,7 @@ for t in btest rtest deskt mtest xtest stest; do node tests/$t.js 2>&1 | grep -c
 Tests write screenshots to `web/shots/` (gitignored); open one only when a test fails. Add a test for what you add; keep them fast.
 
 ## Hot-spot files (merge conflicts live here)
-`settings.js` (rows), `body.html`, `style.css` (append at the end, under a `/* name */` comment), `app.js` (init calls), `build.py` (JS list), `ask.js` (results rows).
+`settings.js` (rows; the Data tab now has the workspace rows), `body.html`, `style.css` (append at the end, under a `/* name */` comment), `app.js` (init calls), `build.py` (JS list), `ask.js` (results rows).
 Rule for every card: put the work in **a new file**, wire it with at most ~10 lines in these, and say which lines in your note.
 
 ## The task cards
@@ -86,6 +86,12 @@ design session: a one-page contract and a migration, not code. Out of scope for 
 
 ### Waiting on the owner (do not start)
 The art-direction reference (video/screenshots); which step counter he wears (Health Connect vs watch; lives in Crocodyl); the "slanted toggle" (which Hyle switch); D-X/D-AL–D-AN follow-ups.
+
+### Done by the 2026-11-11 session (not a card)
+Pitch-black page; crisp canvases (`T.pxr`, never below 1.5x); the Signal panel is now **Concentration** (`concentration.js`, from commit counts, nothing simulated);
+the kanban was hidden by a `.board` class clash (renamed `.desk-layer`: **grep a class name before you add it**); platforms are data (`SEED.platforms/platformsNot`, plus Settings > Where each project runs);
+personal targets and facts moved into `SEED.targets/facts`; `scan/*.py` take `ORRERY_ME/SINCE/INTERNAL` and a `workspace.json`; a first-run sheet loads a stranger's `graph.js` (+ `seed.json`) in the browser (`userdata.js`, `workspace.js`).
+Still open for sharing: a seed builder in-page (today a stranger starts with empty tasks), and the README screenshots.
 
 ## Parallel or not
 Total tokens are **higher** in parallel, not lower: each agent loads its own context and re-reads the repo; nothing is shared. Parallel buys wall-clock time only, at a cost in merges.

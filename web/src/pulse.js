@@ -159,80 +159,9 @@
     th.appendChild(document.createTextNode(' of tasks opened in 8 weeks are closed. Median ' + tp.cycleDays + ' days from start to done.'));
   };
 
-  // ------------------------------------------------------------ signal (simulated until the stream is connected)
-  var sig = { t: 0, amp: [0.5, 0.4, 0.6, 0.5, 0.2], hist: [], raf: 0, last: 0, canvas: null, ctx: null, w: 0, h: 0, dpr: 1 };
-  var F = [2, 6, 10, 20, 38];
-  function sample(t, ch) {
-    var v = 0, i;
-    for (i = 0; i < 5; i++) v += sig.amp[i] * Math.sin(2 * Math.PI * F[i] * (t + ch * 0.137) + ch * 1.7 + i);
-    return v + (Math.random() - 0.5) * 0.5;
-  }
-  function sizeCanvas() {
-    var c = sig.canvas;
-    if (!c) return;
-    sig.dpr = Math.min(2, window.devicePixelRatio || 1);
-    sig.w = c.clientWidth; sig.h = c.clientHeight;
-    c.width = Math.round(sig.w * sig.dpr); c.height = Math.round(sig.h * sig.dpr);
-  }
-  function drawSignal(now) {
-    sig.raf = requestAnimationFrame(drawSignal);
-    if (!sig.canvas || !sig.canvas.offsetParent || document.hidden || S.lean === 'back') return;
-    if (now - sig.last < 33) return;
-    var dt = sig.last ? Math.min(0.1, (now - sig.last) / 1000) : 0.033;
-    sig.last = now; sig.t += dt;
-    // the band amplitudes wander slowly; the bars read the same numbers the trace is made of
-    for (var i = 0; i < 5; i++) sig.amp[i] = Math.max(0.08, Math.min(1, sig.amp[i] + (Math.random() - 0.5) * 0.02 + (0.5 - sig.amp[i]) * 0.002));
-    var ctx = sig.ctx, w = sig.w, h = sig.h, CH = 3, span = 4, n = Math.max(60, Math.floor(w / 2));
-    ctx.setTransform(sig.dpr, 0, 0, sig.dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
-    for (var ch = 0; ch < CH; ch++) {
-      var cy = h * (ch + 0.5) / CH, k;
-      ctx.beginPath();
-      for (k = 0; k <= n; k++) {
-        var tt = sig.t - span + span * k / n, v = sample(tt, ch) * 0.2;
-        var px = w * k / n, py = cy - v * (h / CH) * 0.9;
-        if (k) ctx.lineTo(px, py); else ctx.moveTo(px, py);
-      }
-      ctx.strokeStyle = 'rgba(236,232,228,' + (ch === 0 ? 0.85 : 0.38) + ')';
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-    }
-  }
-  function tickBands() {
-    var bars = T.$$('#bands .band i'), sum = 0;
-    if (!bars.length || !bars[0].offsetParent) return;
-    sig.amp.forEach(function (a) { sum += a * a; });
-    sig.amp.forEach(function (a, i) { bars[i].style.height = Math.round(18 + a * a / sum * 180) + '%'; });
-    var live = T.$('#sigLive');
-    if (live) live.textContent = S.liveDerived ? 'Focus estimate ' + (sig.amp[3] / (sig.amp[1] + sig.amp[2])).toFixed(2) + ', beta over theta and alpha' : 'Derived focus appears after each block, following the Baseline rule.';
-  }
-  T.renderSignal = function () {
-    var bands = T.$('#bands');
-    if (!bands.children.length) {
-      [['δ', 'delta'], ['θ', 'theta'], ['α', 'alpha'], ['β', 'beta'], ['γ', 'gamma']].forEach(function (b) {
-        bands.appendChild(el('div', { class: 'band', title: b[1] }, el('i'), el('span', null, b[0])));
-      });
-      var cups = T.$('#cups'), q = [[2, 2, 1, 2, 2, 2], [2, 1, 2, 2, 0, 2]];
-      q.forEach(function (row, i) {
-        var cup = el('div', { class: 'cup', title: (i ? 'Right' : 'Left') + ' ear cup, six contacts' });
-        row.forEach(function (v) { cup.appendChild(el('i', { data: { q: v } })); });
-        cups.appendChild(cup);
-      });
-      var swb = T.$('#liveSw');
-      swb.addEventListener('click', function () { S.liveDerived = !S.liveDerived; swb.setAttribute('aria-pressed', String(S.liveDerived)); tickBands(); });
-      sig.canvas = T.$('#sigCanvas'); sig.ctx = sig.canvas.getContext('2d');
-      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      sizeCanvas();
-      if (reduce) { sig.t = 4; cancelAnimationFrame(sig.raf); sig.last = 0; requestAnimationFrame(function (n) { drawSignal(n); cancelAnimationFrame(sig.raf); }); }
-      else sig.raf = requestAnimationFrame(drawSignal);
-      setInterval(tickBands, 500);
-    }
-    sizeCanvas();
-    tickBands();
-    renderAfter();
-  };
-  // what the headset says about each block once it is over: Baseline's rule is no live score, so this is where focus shows
-  // the sample blocks, newest first, as numbers: what the panel shows, for anything else that asks
+  // ------------------------------------------------------------ signal: the panel is Concentration (concentration.js); no simulated EEG is drawn
+  T.renderSignal = function () { if (T.renderConcentration) T.renderConcentration(); };
+  // the sample blocks, newest first, for Ask's honest "in the sample trace" answer only; the panel no longer shows them
   T.blockSamples = function () {
     var names = {}; SEED.sounds.forEach(function (s) { names[s.id] = s.name.toLowerCase(); });
     var plan = ['brown', 'rain', 'brown', 'none', 'drone'];
@@ -242,21 +171,6 @@
         focus: 0.56 + ((Math.round(b[0] * 10) * 37) % 25) / 100, calm: 0.38 + ((Math.round(b[0] * 10) * 53) % 29) / 100 };
     }).reverse();
   };
-  function renderAfter() {
-    var ul = T.$('#afterBlocks');
-    if (!ul) return;
-    T.clear(ul);
-    var names = {}; SEED.sounds.forEach(function (s) { names[s.id] = s.name.toLowerCase(); });
-    var plan = ['brown', 'rain', 'brown', 'none', 'drone'];
-    SEED.blocks.map(function (b, i) { return { b: b, i: i }; }).reverse().forEach(function (x) {
-      var b = x.b, f = 0.56 + ((Math.round(b[0] * 10) * 37) % 25) / 100, calm = 0.38 + ((Math.round(b[0] * 10) * 53) % 29) / 100;
-      var h = Math.floor(b[0]), m = Math.round((b[0] - h) * 60);
-      ul.appendChild(el('li', { class: 'row' }, el('span', { class: 'row-r' }, T.pad(h) + ':' + T.pad(m)),
-        el('span', null, el('span', { class: 'row-t' }, b[1] + ' min, ' + (plan[x.i % plan.length] === 'none' ? 'silence' : names[plan[x.i % plan.length]])),
-          el('span', { class: 'row-s' }, 'focus ' + f.toFixed(2) + ', calm ' + calm.toFixed(2))),
-        el('span', { class: 'fbar', title: 'Focus estimate, beta over theta and alpha' }, el('i', { style: { width: Math.round(f * 100) + '%' } }))));
-    });
-  }
 
   // ------------------------------------------------------------ focus: a session clock and sound made on the device
   var fo = { running: false, start: 0, elapsed: 0, target: 50 * 60, sound: 'none', vol: 0.5, ctx: null, gain: null, nodes: [], lock: null };
@@ -438,7 +352,7 @@
   };
 
   T.widgets = [
-    { id: 'signal', title: 'Signal', reads: ['eeg.raw', 'eeg.bands', 'eeg.contact', 'focus.blocks'], render: T.renderSignal },
+    { id: 'signal', title: 'Concentration', reads: ['commits.weeks'], render: function () { return T.renderSignal(); } },
     { id: 'focus', title: 'Focus', reads: ['focus.session', 'focus.blocks', 'schedule.nudges', 'git.hours'], render: T.renderFocus }
   ];
 })();

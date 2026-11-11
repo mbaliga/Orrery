@@ -1224,7 +1224,7 @@
     var r = C.host.getBoundingClientRect();
     C.hostRect = { left: r.left, top: r.top };
     var W = Math.max(1, Math.round(r.width)), H = Math.max(1, Math.round(r.height));
-    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var dpr = T.pxr();
     if (W * H * dpr * dpr > 9e6) dpr = Math.max(1, Math.sqrt(9e6 / (W * H)));
     C.W = W; C.H = H; C.dpr = dpr;
     [C.stars, C.far, C.near].forEach(function (cv) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); });
